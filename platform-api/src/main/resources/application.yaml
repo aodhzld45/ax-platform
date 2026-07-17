@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: platform-api
+
+  datasource:
+    url: jdbc:h2:mem:axplatform
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  jpa:
+    open-in-view: false
+
+    hibernate:
+      ddl-auto: create-drop
+
+    properties:
+      hibernate:
+        format_sql: true
+
+    show-sql: true
+
+server:
+  port: 8080
+
+# 추후에 환경별로 변경
+# Docker Compose - http://ai-api:8000
+# 운영 서버 - http://내부-ai-api주소:8000
+ai:
+  api:
+    base-url: http://127.0.0.1:8000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info
+
+  endpoint:
+    health:
+      show-details: always
