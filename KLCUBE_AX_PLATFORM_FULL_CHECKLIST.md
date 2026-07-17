@@ -17,6 +17,7 @@
 - [x] Spring Boot 애플리케이션 실행
 - [x] H2 및 JPA 초기화 확인
 - [x] Java Health API 구성
+- [x] 공통 파일 저장 구조 구성
 - [x] Python 3.12 및 uv 기반 AI API 프로젝트 생성
 - [x] FastAPI 애플리케이션 실행
 - [x] Python Health API 구성
@@ -250,6 +251,75 @@ klcube-ax-prototype/
   - [ ] `application-local.yml`
   - [ ] `application-dev.yml`
   - [ ] `application-prod.yml`
+
+## 4-5-1. 공통 파일 저장 구조
+
+- [x] `common.file` 패키지 생성
+- [x] `FileUtil` 공통 파일 저장 유틸 구성
+- [x] `FileStorageProperties` 업로드 경로 설정 분리
+- [x] DB 저장용 파일 메타데이터 `StoredFileInfo` 구성
+- [x] 파일 자산 타입 `FileAssetType` 정의
+  - [x] `KOREAN_SOURCE_DOCUMENT`
+  - [x] `PARALLEL_CORPUS`
+  - [x] `GLOSS_DICTIONARY`
+  - [x] `JOB_INTERMEDIATE`
+  - [ ] `SIGN_MOTION`
+  - [ ] `NON_MANUAL_MOTION`
+  - [ ] `AVATAR_MODEL`
+  - [ ] `JOB_OUTPUT`
+- [x] AI Job 파일 단계 `JobFileStage` 정의
+  - [x] `INPUT`
+  - [x] `INTERMEDIATE`
+  - [x] `OUTPUT`
+  - [x] `LOG`
+- [x] 원천 문서 저장 경로 구조 정의
+  - [x] `document/korean-source/{resourceKey}/{version}`
+- [x] 데이터셋 저장 경로 구조 정의
+  - [x] `dataset/parallel-corpus/{resourceKey}/{version}`
+  - [x] `dataset/gloss-dictionary/{resourceKey}/{version}`
+- [x] AI Job 산출물 저장 경로 구조 정의
+  - [x] `job/{jobId}/input`
+  - [x] `job/{jobId}/intermediate`
+  - [x] `job/{jobId}/output`
+  - [x] `job/{jobId}/log`
+- [x] UUID 기반 저장 파일명 생성
+- [x] 원본 파일명, 저장 파일명, 저장 경로, 확장자, Content-Type, 파일 크기 반환
+- [x] Path Traversal 방지 로직 구성
+- [x] 로컬 프로토타입용 업로드 경로 설정
+- [x] multipart 업로드 크기 제한 설정
+- [ ] `/files/**` 정적 리소스 서빙 설정
+- [ ] 파일 메타데이터 DB Entity 연결
+- [ ] 업로드 실패 시 DB Rollback 및 파일 정리 정책 적용
+
+## 현재 프로토타입 파일 처리 흐름
+
+```text
+국문 PDF 업로드
+→ document/korean-source 저장
+→ Python에서 텍스트 추출
+→ job/{jobId}/intermediate 파싱 결과 저장
+→ 글로스 사전 또는 병렬 말뭉치 검색
+→ gloss-sequence.json 생성
+→ motion-sequence.json 생성
+```
+
+## 우선 지원 파일 자산 타입
+
+```text
+KOREAN_SOURCE_DOCUMENT  # 국문 PDF 원본
+PARALLEL_CORPUS         # 국문-글로스 매핑 JSON/CSV
+GLOSS_DICTIONARY        # 글로스 사전 JSON/CSV
+JOB_INTERMEDIATE        # 파싱 결과·글로스 결과 JSON
+```
+
+## 이후 확장 파일 자산 타입
+
+```text
+SIGN_MOTION
+NON_MANUAL_MOTION
+AVATAR_MODEL
+JOB_OUTPUT
+```
 
 ## 4-6. Java Health API
 
