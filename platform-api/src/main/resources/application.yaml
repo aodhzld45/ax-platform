@@ -1,4 +1,12 @@
+file:
+  upload-path: ${FILE_UPLOAD_PATH:/home/upload/ax-platform}
+
 spring:
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
   application:
     name: platform-api
 
