@@ -331,9 +331,34 @@ klcube-ax-prototype/
 - [x] Path Traversal 방지 로직 구성
 - [x] 로컬 프로토타입용 업로드 경로 설정
 - [x] multipart 업로드 크기 제한 설정
-- [ ] `/files/**` 정적 리소스 서빙 설정
-- [ ] 파일 메타데이터 DB Entity 연결
+- [x] `/files/**` 정적 리소스 서빙 설정
+- [x] `KOREAN_SOURCE_DOCUMENT` 확장자 정책 정리
+  - [x] 프로토타입 단계에서 국문 PDF 원본만 허용
+  - [x] `FileUploadPolicy` 기준 확장자 `pdf` 허용
+  - [x] `application/pdf` MIME Type 검증
+- [x] 파일 메타데이터 DB Entity 설계
+  - [x] `FileMetadata` Entity 작성
+  - [x] `FileMetadataStatus` Enum 작성
+  - [x] `FileMetadataRepository` 작성
+  - [x] `BaseTimeEntity` 공통 시간 Entity 작성
+  - [x] `JpaAuditingConfig` 작성
+  - [x] `StoredFileInfo` 경로 필드 분리
+    - [x] `storageRelativePath`
+    - [x] `accessPath`
+    - [x] 기존 호환용 `storedPath` 유지
+- [x] 향후 `Document` Entity와 `FileMetadata` 1:1 연결 설계 문서화
 - [ ] 업로드 실패 시 DB Rollback 및 파일 정리 정책 적용
+
+## 다음 작업
+
+```text
+Document 업로드 API 구현
+→ KOREAN_SOURCE_DOCUMENT 파일 정책 검증
+→ FileUtil로 물리 파일 저장
+→ FileMetadataRepository로 파일 메타데이터 저장
+→ Document Entity에서 FileMetadata 1:1 참조
+→ 업로드 실패 시 DB Rollback 및 파일 정리 정책 적용
+```
 
 ## 현재 프로토타입 파일 처리 흐름
 
@@ -1471,11 +1496,24 @@ frontend
 
 # 28. 현재 기준 다음 작업
 
-현재 Java → Python 경유 테스트가 완료되었으므로 다음 순서로 진행한다.
+현재 공통 파일 저장 구조, 파일 정책, 정적 리소스 서빙, 파일 메타데이터 Entity 설계가 완료되었으므로 다음 순서로 진행한다.
 
 ## 가장 먼저 진행
 
-### 1순위 — Java↔Python 연동 안정화
+### 1순위 — Document 업로드 API와 FileMetadata 저장 연결
+
+- [ ] `Document` Entity 설계
+- [ ] `DocumentStatus` Enum 작성
+- [ ] `IndexStatus` Enum 작성
+- [ ] `DocumentRepository` 작성
+- [ ] 국문 PDF 업로드 Request/Response DTO 작성
+- [ ] `FileUploadValidator`로 `KOREAN_SOURCE_DOCUMENT` 정책 검증
+- [ ] `FileUtil`로 원천 문서 저장
+- [ ] `FileMetadataRepository`로 파일 메타데이터 저장
+- [ ] `Document`에서 `FileMetadata` 1:1 참조
+- [ ] 업로드 실패 시 DB Rollback 및 저장 파일 정리
+
+### 2순위 — Java↔Python 연동 안정화
 
 - [ ] Python 서버 중지 시 예외 처리
 - [ ] Timeout 처리
@@ -1483,21 +1521,19 @@ frontend
 - [ ] 통합 서비스 상태 API
 - [ ] 요청 ID 전달
 
-### 2순위 — PostgreSQL 및 Flyway
+### 3순위 — PostgreSQL 및 Flyway
 
 - [ ] Docker PostgreSQL
 - [ ] PostgreSQL Driver
 - [ ] Flyway
-- [ ] BaseEntity
+- [x] BaseEntity
 
-### 3순위 — Document와 AI Job
+### 4순위 — AI Job
 
-- [ ] Document Entity
 - [ ] AiJob Entity
-- [ ] 파일 업로드
 - [ ] 인덱싱 Job 생성
 
-### 4순위 — Python 문서 파싱
+### 5순위 — Python 문서 파싱
 
 - [ ] 파서
 - [ ] 청킹
