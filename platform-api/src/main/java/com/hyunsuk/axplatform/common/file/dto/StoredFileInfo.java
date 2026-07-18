@@ -22,6 +22,10 @@ public class StoredFileInfo {
      */
     private String storedPath;
 
+    private String storageRelativePath;
+
+    private String accessPath;
+
     private String extension;
 
     private String contentType;

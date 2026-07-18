@@ -293,18 +293,20 @@ public class FileUtil {
                     StandardCopyOption.REPLACE_EXISTING
             );
 
-            Path relativePath =
-                    uploadRoot.relativize(fullPath);
-
-            String storedPath = PUBLIC_FILE_PREFIX
-                    + relativePath
+            String storageRelativePath = uploadRoot
+                    .relativize(fullPath)
                     .toString()
                     .replace("\\", "/");
+
+            String accessPath = PUBLIC_FILE_PREFIX
+                    + storageRelativePath;
 
             return StoredFileInfo.builder()
                     .originalFilename(originalFilename)
                     .storedFilename(storedFilename)
-                    .storedPath(storedPath)
+                    .storedPath(accessPath)
+                    .storageRelativePath(storageRelativePath)
+                    .accessPath(accessPath)
                     .extension(extension)
                     .contentType(contentType)
                     .fileSize(fileSize)
