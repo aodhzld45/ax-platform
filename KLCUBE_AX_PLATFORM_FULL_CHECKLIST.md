@@ -36,7 +36,7 @@
 }
 ```
 
-## 현재 시스템 연결 상태
+## 0-1. 현재 시스템 연결 상태
 
 ```text
 Client 또는 Postman
@@ -58,6 +58,50 @@ Java 응답 반환
 ```
 
 현재는 **Java 운영 API와 Python AI API 사이의 최소 통신 경로가 완성된 상태**다.
+
+## 0-2. 현재 파일 저장 구조 상태
+
+```text
+현재 FileUtil은 파일을 물리 저장한 후 다음과 같은 정보를 StoredFileInfo로 반환한다.
+
+원본 파일명
+저장 파일명
+저장 상대 경로
+외부 접근 경로
+확장자
+Content-Type
+파일 크기
+
+외부 접근 경로는 다음과 같은 형태다.
+
+/files/document/korean-source/{resourceKey}/{version}/{storedFileName}
+
+하지만 현재는 /files/** URL과 실제 로컬 업로드 디렉터리를 연결하는 Spring MVC 설정이 아직 없다.
+
+StoredFileInfo.storedPath
+/files/...
+
+        │
+        ▼
+
+Spring Boot ResourceHandler
+아직 미구현
+
+        │
+        ▼
+
+실제 물리 파일 경로
+{file.storage.root-path}/...
+
+따라서 현재 바로 진행할 작업은 다음과 같다.
+
+파일 저장 구조 구성 완료
+→ 실제 파일 저장 가능
+→ /files/... 논리 경로 반환 가능
+→ /files/** 정적 리소스 매핑
+→ 브라우저 및 Postman 파일 조회 검증
+→ 파일 메타데이터 DB 연결
+```
 
 ---
 
