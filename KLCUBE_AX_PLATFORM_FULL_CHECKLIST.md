@@ -347,16 +347,23 @@ klcube-ax-prototype/
     - [x] `accessPath`
     - [x] 기존 호환용 `storedPath` 유지
 - [x] 향후 `Document` Entity와 `FileMetadata` 1:1 연결 설계 문서화
+- [x] `Document` Entity와 `FileMetadata` 1:1 참조 기반 구현
+  - [x] `document.entity.Document` 작성
+  - [x] `DocumentStatus` Enum 작성
+  - [x] `DocumentIndexStatus` Enum 작성
+  - [x] `DocumentRepository` 작성
+  - [x] `resourceKey + version` 유니크 제약 구성
 - [ ] 업로드 실패 시 DB Rollback 및 파일 정리 정책 적용
 
 ## 다음 작업
 
 ```text
 Document 업로드 API 구현
+→ 국문 PDF 업로드 Request/Response DTO 작성
 → KOREAN_SOURCE_DOCUMENT 파일 정책 검증
 → FileUtil로 물리 파일 저장
 → FileMetadataRepository로 파일 메타데이터 저장
-→ Document Entity에서 FileMetadata 1:1 참조
+→ DocumentRepository로 Document 저장
 → 업로드 실패 시 DB Rollback 및 파일 정리 정책 적용
 ```
 
@@ -651,9 +658,12 @@ GET /api/v1/system/services
 
 ## 8-1. Document 모델
 
-- [ ] `Document` Entity
-- [ ] `DocumentStatus` Enum
-- [ ] `DocumentRepository`
+- [x] `Document` Entity
+- [x] `DocumentStatus` Enum
+- [x] `DocumentIndexStatus` Enum
+- [x] `DocumentRepository`
+- [x] `Document`와 `FileMetadata` 1:1 참조 매핑
+- [x] `resourceKey + version` 유니크 제약
 - [ ] 등록 Request DTO
 - [ ] 목록 Response DTO
 - [ ] 상세 Response DTO
@@ -1502,15 +1512,16 @@ frontend
 
 ### 1순위 — Document 업로드 API와 FileMetadata 저장 연결
 
-- [ ] `Document` Entity 설계
-- [ ] `DocumentStatus` Enum 작성
-- [ ] `IndexStatus` Enum 작성
-- [ ] `DocumentRepository` 작성
+- [x] `Document` Entity 설계
+- [x] `DocumentStatus` Enum 작성
+- [x] `DocumentIndexStatus` Enum 작성
+- [x] `DocumentRepository` 작성
+- [x] `Document`에서 `FileMetadata` 1:1 참조
 - [ ] 국문 PDF 업로드 Request/Response DTO 작성
 - [ ] `FileUploadValidator`로 `KOREAN_SOURCE_DOCUMENT` 정책 검증
 - [ ] `FileUtil`로 원천 문서 저장
 - [ ] `FileMetadataRepository`로 파일 메타데이터 저장
-- [ ] `Document`에서 `FileMetadata` 1:1 참조
+- [ ] `DocumentRepository`로 Document 저장
 - [ ] 업로드 실패 시 DB Rollback 및 저장 파일 정리
 
 ### 2순위 — Java↔Python 연동 안정화
