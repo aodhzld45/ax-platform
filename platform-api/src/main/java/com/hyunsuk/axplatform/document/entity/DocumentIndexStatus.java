@@ -2,7 +2,7 @@ package com.hyunsuk.axplatform.document.entity;
 
 public enum DocumentIndexStatus {
 
-    NOT_INDEXED,
+    NOT_REQUESTED,
     INDEXING,
     INDEXED,
     FAILED

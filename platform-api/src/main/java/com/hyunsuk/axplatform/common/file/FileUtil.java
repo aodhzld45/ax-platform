@@ -227,6 +227,23 @@ public class FileUtil {
         return absolutePath;
     }
 
+    public boolean deleteByAccessPath(String accessPath) {
+        if (accessPath == null || accessPath.isBlank()) {
+            return false;
+        }
+
+        Path absolutePath = resolveAbsolutePath(accessPath);
+
+        try {
+            return Files.deleteIfExists(absolutePath);
+        } catch (IOException e) {
+            throw new IllegalStateException(
+                    "Failed to delete stored file: " + accessPath,
+                    e
+            );
+        }
+    }
+
     public String extractFileNameFromPath(String filePath) {
         if (filePath == null || filePath.isBlank()) {
             return "";

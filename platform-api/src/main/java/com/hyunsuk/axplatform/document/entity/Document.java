@@ -81,7 +81,7 @@ public class Document extends BaseTimeEntity {
                 ? DocumentStatus.ACTIVE
                 : documentStatus;
         this.indexStatus = indexStatus == null
-                ? DocumentIndexStatus.NOT_INDEXED
+                ? DocumentIndexStatus.NOT_REQUESTED
                 : indexStatus;
         this.fileMetadata = fileMetadata;
     }
