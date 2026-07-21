@@ -410,7 +410,7 @@ Document 업로드 API 구현
 → DocumentRepository로 Document 저장 연결 완료
 → 업로드 실패 시 DB Rollback 및 파일 정리 정책 적용 완료
 → multipart 업로드 201 Created, /files/** 조회, 비허용 파일 400 검증 완료
-→ 다음: Document 목록/상세 API 및 공통 ErrorResponse 구현
+→ 다음: KoreanSourceDocument 도메인 등록 API 구현
 ```
 
 ## 현재 프로토타입 파일 처리 흐름
@@ -1401,10 +1401,10 @@ Refresh Token
 ## Java 공통 응답
 
 - [ ] `ApiResponse<T>`
-- [ ] `ErrorResponse`
+- [x] `ErrorResponse`
 - [ ] Error Code Enum
-- [ ] Global Exception Handler
-- [ ] Validation Error 처리
+- [x] Global Exception Handler
+- [x] Validation Error 처리
 - [ ] AI API Error 처리
 
 ## Python 공통 응답
@@ -1756,12 +1756,21 @@ frontend
 
 ### 다음 작업
 
-- [ ] Document 목록 API 구현
-- [ ] Document 상세 API 구현
+- [x] Document 목록 API 구현
+- [x] Document 상세 API 구현
 - [ ] 국문 원천 문서 도메인 업로드 흐름에서 `KoreanSourceDocument` 생성 연결
-- [ ] 도메인별 등록 API 설계
-- [ ] 공통 ErrorResponse 적용
-- [ ] 업로드 파일 크기 정책 검증 보강
+- [x] 도메인별 등록 API 설계
+- [x] 공통 ErrorResponse 적용
+- [x] 업로드 파일 크기 정책 검증 보강
+- [x] `GET /api/v1/documents` Document 목록 조회 API 구현
+- [x] `GET /api/v1/documents/{documentId}` Document 상세 조회 API 구현
+- [x] `ErrorResponse` 및 `GlobalExceptionHandler` 적용
+- [x] `FileUploadPolicy.maxFileSizeBytes` 기반 파일 크기 정책 검증
+- [x] `DOMAIN_REGISTRATION_API_DESIGN.md` 도메인별 등록 API 설계 작성
+- [ ] KoreanSourceDocument 도메인 등록 API 구현
+- [ ] SignLanguageDataset 도메인 등록 API 구현
+- [ ] MuseumManual / MedicalManual 도메인 등록 API 구현
+- [ ] Document 목록 API 페이지네이션 및 상태 필터 적용
 
 ### 2순위 — Java↔Python 연동 안정화
 
