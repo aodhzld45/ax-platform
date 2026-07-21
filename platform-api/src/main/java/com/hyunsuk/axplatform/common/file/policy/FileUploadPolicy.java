@@ -17,18 +17,22 @@ public enum FileUploadPolicy {
                     "pdf", Set.of(
                             "application/pdf"
                     )
-            )
+            ),
+            100L * 1024L * 1024L
     );
 
     private final FileAssetType assetType;
     private final Map<String, Set<String>> allowedContentTypesByExtension;
     private final Set<String> allowedExtensions;
+    private final long maxFileSizeBytes;
 
     FileUploadPolicy(
             FileAssetType assetType,
-            Map<String, Set<String>> allowedContentTypesByExtension
+            Map<String, Set<String>> allowedContentTypesByExtension,
+            long maxFileSizeBytes
     ) {
         this.assetType = assetType;
+        this.maxFileSizeBytes = maxFileSizeBytes;
 
         this.allowedContentTypesByExtension =
                 allowedContentTypesByExtension.entrySet()

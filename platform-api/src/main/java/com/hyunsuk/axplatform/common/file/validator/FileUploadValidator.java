@@ -25,6 +25,7 @@ public class FileUploadValidator {
         String extension = extractExtension(originalFileName);
         FileUploadPolicy policy = FileUploadPolicy.from(assetType);
 
+        validateFileSize(policy, file.getSize());
         validateExtension(policy, extension);
         validateContentType(policy, extension, file.getContentType());
     }
@@ -95,6 +96,19 @@ public class FileUploadValidator {
                     "FILE_EXTENSION_NOT_ALLOWED",
                     "허용되지 않은 파일 확장자입니다. 허용 확장자: "
                             + policy.getAllowedExtensions()
+            );
+        }
+    }
+
+    private void validateFileSize(
+            FileUploadPolicy policy,
+            long fileSize
+    ) {
+        if (fileSize > policy.getMaxFileSizeBytes()) {
+            throw new FilePolicyViolationException(
+                    "FILE_SIZE_EXCEEDED",
+                    "File size exceeds the allowed upload limit. maxBytes="
+                            + policy.getMaxFileSizeBytes()
             );
         }
     }

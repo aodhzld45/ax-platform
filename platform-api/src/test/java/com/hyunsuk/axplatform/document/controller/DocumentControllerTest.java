@@ -7,12 +7,11 @@ import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.mock.web.MockMultipartFile;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -58,14 +57,14 @@ class DocumentControllerTest {
         MvcResult result = mockMvc.perform(
                         multipart("/api/v1/documents")
                                 .file(file)
-                                .param("title", "국문 수어 변환 원천 문서")
+                                .param("title", "Korean source document")
                 )
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.documentId").exists())
                 .andExpect(jsonPath("$.resourceKey").exists())
                 .andExpect(jsonPath("$.version").value(1))
                 .andExpect(jsonPath("$.title")
-                        .value("국문 수어 변환 원천 문서"))
+                        .value("Korean source document"))
                 .andExpect(jsonPath("$.originalFileName")
                         .value("korean-source.pdf"))
                 .andExpect(jsonPath("$.accessPath").exists())
@@ -80,6 +79,7 @@ class DocumentControllerTest {
         );
         String accessPath = response.get("accessPath").asText();
         String relativePath = accessPath.replaceFirst("^/files/", "");
+        long documentId = response.get("documentId").asLong();
 
         assertThat(Files.exists(uploadRoot.resolve(relativePath)))
                 .isTrue();
@@ -87,6 +87,21 @@ class DocumentControllerTest {
         mockMvc.perform(get(accessPath))
                 .andExpect(status().isOk())
                 .andExpect(content().bytes(pdfBytes));
+
+        mockMvc.perform(get("/api/v1/documents"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].documentId").exists())
+                .andExpect(jsonPath("$[0].file.accessPath").exists());
+
+        mockMvc.perform(get("/api/v1/documents/{documentId}", documentId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.documentId").value(documentId))
+                .andExpect(jsonPath("$.title")
+                        .value("Korean source document"))
+                .andExpect(jsonPath("$.file.originalFileName")
+                        .value("korean-source.pdf"))
+                .andExpect(jsonPath("$.file.accessPath")
+                        .value(accessPath));
     }
 
     @Test
@@ -101,15 +116,28 @@ class DocumentControllerTest {
         mockMvc.perform(
                         multipart("/api/v1/documents")
                                 .file(file)
-                                .param("title", "잘못된 파일")
+                                .param("title", "Invalid file")
                 )
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode")
-                        .value("FILE_EXTENSION_NOT_ALLOWED"));
+                        .value("FILE_EXTENSION_NOT_ALLOWED"))
+                .andExpect(jsonPath("$.path")
+                        .value("/api/v1/documents"))
+                .andExpect(jsonPath("$.timestamp").exists());
 
         try (var paths = Files.walk(uploadRoot)) {
             assertThat(paths.filter(Files::isRegularFile))
                     .isEmpty();
         }
+    }
+
+    @Test
+    void findMissingDocumentReturnsNotFound() throws Exception {
+        mockMvc.perform(get("/api/v1/documents/{documentId}", 999_999L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode")
+                        .value("DOCUMENT_NOT_FOUND"))
+                .andExpect(jsonPath("$.path")
+                        .value("/api/v1/documents/999999"));
     }
 }

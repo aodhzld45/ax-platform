@@ -8,12 +8,15 @@ import com.hyunsuk.axplatform.common.file.type.FileAssetType;
 import com.hyunsuk.axplatform.common.file.validator.FileUploadValidator;
 import com.hyunsuk.axplatform.document.dto.DocumentUploadRequest;
 import com.hyunsuk.axplatform.document.dto.DocumentUploadResponse;
+import com.hyunsuk.axplatform.document.dto.DocumentResponse;
 import com.hyunsuk.axplatform.document.entity.Document;
+import com.hyunsuk.axplatform.document.exception.DocumentNotFoundException;
 import com.hyunsuk.axplatform.document.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -28,6 +31,24 @@ public class DocumentService {
     private final FileUtil fileUtil;
     private final FileMetadataRepository fileMetadataRepository;
     private final DocumentRepository documentRepository;
+
+    @Transactional(readOnly = true)
+    public List<DocumentResponse> findAll() {
+        return documentRepository.findAllByOrderByIdDesc()
+                .stream()
+                .map(DocumentResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public DocumentResponse findById(Long documentId) {
+        Document document = documentRepository
+                .findWithFileMetadataById(documentId)
+                .orElseThrow(() ->
+                        new DocumentNotFoundException(documentId));
+
+        return DocumentResponse.from(document);
+    }
 
     @Transactional
     public DocumentUploadResponse upload(DocumentUploadRequest request) {
