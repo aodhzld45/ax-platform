@@ -7,6 +7,45 @@
 
 ---
 
+# 0-A. 최종 목표 — 언어 말뭉치 기반 수어 3D 아바타 생성
+
+모두의 말뭉치와 같은 대규모 국문 언어 데이터를 활용하여 한국어 문장의 의미와 문법 구조를 분석하고, 이를 수어 글로스와 수어 동작 데이터로 변환한다. 이후 손동작, 표정, 시선, 고개 움직임 등의 비수지 표현을 조합하여 최종적으로 3D 아바타 수어 영상을 생성하는 것을 목표로 한다.
+
+```text
+국문 말뭉치 및 문서
+→ 문장 분석
+→ 국문-글로스 변환
+→ 수어 동작 데이터 검색·조합
+→ 비수지 표현 적용
+→ 3D 아바타 모션 적용
+→ 수어 영상 생성
+```
+
+## 역할 분리
+
+```text
+Java Platform API
+→ 문서, 파일, 도메인 Entity, AI Job, 처리 상태, 결과 파일 관리
+
+Python AI API
+→ 국문 분석, 임베딩 생성, 글로스 변환, 수어 동작 조합, 비수지 표현 매핑, AI 워크플로우 담당
+```
+
+## 핵심 변환 계층
+
+```text
+Document
+→ CorpusSentence
+→ CorpusEmbedding
+→ GlossSequence
+→ SignMotion
+→ NonManualSignal
+→ AvatarMotionTimeline
+→ JobOutput
+```
+
+---
+
 # 0. 현재 진행 상태
 
 ## 현재 완료된 마일스톤
@@ -353,18 +392,25 @@ klcube-ax-prototype/
   - [x] `DocumentIndexStatus` Enum 작성
   - [x] `DocumentRepository` 작성
   - [x] `resourceKey + version` 유니크 제약 구성
-- [ ] 업로드 실패 시 DB Rollback 및 파일 정리 정책 적용
+- [x] 장기 도메인 구조 적용
+  - [x] 국문 원천 문서, 수어 데이터셋, 박물관 매뉴얼, 의료 매뉴얼 Entity가 `Document` 참조
+- [x] 업로드 실패 시 DB Rollback 및 파일 정리 정책 적용
+  - [x] `FileUtil.deleteByAccessPath` 작성
+  - [x] DB 저장 실패 시 저장된 물리 파일 삭제 보상 처리
 
 ## 다음 작업
 
 ```text
 Document 업로드 API 구현
-→ 국문 PDF 업로드 Request/Response DTO 작성
-→ KOREAN_SOURCE_DOCUMENT 파일 정책 검증
-→ FileUtil로 물리 파일 저장
-→ FileMetadataRepository로 파일 메타데이터 저장
-→ DocumentRepository로 Document 저장
-→ 업로드 실패 시 DB Rollback 및 파일 정리 정책 적용
+→ POST /api/v1/documents 구현 완료
+→ 국문 PDF 업로드 Request/Response DTO 작성 완료
+→ KOREAN_SOURCE_DOCUMENT 파일 정책 검증 연결 완료
+→ FileUtil로 물리 파일 저장 연결 완료
+→ FileMetadataRepository로 파일 메타데이터 저장 연결 완료
+→ DocumentRepository로 Document 저장 연결 완료
+→ 업로드 실패 시 DB Rollback 및 파일 정리 정책 적용 완료
+→ multipart 업로드 201 Created, /files/** 조회, 비허용 파일 400 검증 완료
+→ 다음: Document 목록/상세 API 및 공통 ErrorResponse 구현
 ```
 
 ## 현재 프로토타입 파일 처리 흐름
@@ -664,11 +710,12 @@ GET /api/v1/system/services
 - [x] `DocumentRepository`
 - [x] `Document`와 `FileMetadata` 1:1 참조 매핑
 - [x] `resourceKey + version` 유니크 제약
-- [ ] 등록 Request DTO
+- [x] 등록 Request DTO
+- [x] 업로드 Response DTO
 - [ ] 목록 Response DTO
 - [ ] 상세 Response DTO
-- [ ] Service
-- [ ] Controller
+- [x] Service
+- [x] Controller
 
 ## Document 주요 필드
 
@@ -689,22 +736,22 @@ updatedAt
 
 - [ ] 문서 목록 API
 - [ ] 문서 상세 API
-- [ ] 문서 업로드 API
+- [x] 문서 업로드 API
 - [ ] 문서 삭제 API
 - [ ] 문서 인덱싱 재요청 API
 - [ ] 페이지네이션
 - [ ] 상태 필터
-- [ ] 파일 확장자 검증
+- [x] 파일 확장자 검증
 - [ ] 파일 크기 검증
 
 ## 8-3. 파일 저장
 
-- [ ] 로컬 저장 경로 설정
-- [ ] UUID 파일명 생성
-- [ ] 원본 파일명 별도 저장
-- [ ] Path Traversal 방지
-- [ ] 업로드 실패 시 DB Rollback
-- [ ] DB 저장 실패 시 파일 정리
+- [x] 로컬 저장 경로 설정
+- [x] UUID 파일명 생성
+- [x] 원본 파일명 별도 저장
+- [x] Path Traversal 방지
+- [x] 업로드 실패 시 DB Rollback
+- [x] DB 저장 실패 시 파일 정리
 - [ ] 저장소 Interface 분리
 - [ ] 이후 S3 교체 가능 구조
 
@@ -1504,7 +1551,175 @@ frontend
 
 ---
 
-# 28. 현재 기준 다음 작업
+# 28. Phase 25 — 언어 말뭉치 및 임베딩 적재
+
+## 28-1. 말뭉치 데이터 모델
+
+- [ ] `CorpusDocument` Entity 설계
+- [ ] `CorpusSentence` Entity 설계
+- [ ] `CorpusEmbedding` Entity 설계
+- [ ] 문서·문단·문장 단위 식별자 설계
+- [ ] 문장 원문 `rawText` 저장
+- [ ] 정규화 문장 `normalizedText` 저장
+- [ ] 도메인 메타데이터 저장
+  - [ ] 국문 원천 문서
+  - [ ] 박물관 안내 매뉴얼
+  - [ ] 의료 매뉴얼
+  - [ ] 수어 데이터셋
+- [ ] 문장 위치 메타데이터 저장
+  - [ ] page
+  - [ ] section
+  - [ ] paragraphIndex
+  - [ ] sentenceIndex
+
+## 28-2. 임베딩 생성 및 적재
+
+- [ ] Python AI API 임베딩 생성 API 설계
+- [ ] Embedding Provider 확정
+- [ ] Embedding 차원 확정
+- [ ] `pgvector` 컬럼 설계
+- [ ] CorpusSentence별 embedding 저장
+- [ ] embedding model/version 저장
+- [ ] 재임베딩 정책 설계
+- [ ] 문서 삭제 시 embedding 삭제 정책 설계
+
+## 28-3. 검색 기준
+
+- [ ] 문장 임베딩 유사도 검색
+- [ ] 도메인 필터 검색
+- [ ] 문서/섹션 메타데이터 필터
+- [ ] 최소 유사도 기준 설정
+- [ ] Top-K 검색 결과 반환
+
+---
+
+# 29. Phase 26 — 국문-글로스 변환 데이터
+
+## 29-1. 글로스 사전
+
+- [ ] `GlossDictionary` Entity 설계
+- [ ] `glossCode` 고유키 설계
+- [ ] 국문 의미 매핑
+- [ ] 품사 및 문법 역할 저장
+- [ ] 도메인별 의미 차이 저장
+- [ ] 동의어/유의어 매핑
+
+## 29-2. 병렬 말뭉치
+
+- [ ] `ParallelCorpus` Entity 설계
+- [ ] 국문 문장 저장
+- [ ] 글로스 시퀀스 저장
+- [ ] 도메인 메타데이터 저장
+- [ ] 변환 신뢰도 저장
+- [ ] 검수 상태 저장
+
+## 29-3. 글로스 시퀀스 생성
+
+- [ ] 국문 문장 분석 결과 수신
+- [ ] 병렬 말뭉치 유사 예문 검색
+- [ ] 글로스 사전 후보 검색
+- [ ] 규칙 기반 어순 변환
+- [ ] LLM 기반 후보 보정
+- [ ] `gloss-sequence.json` 산출물 생성
+- [ ] Job intermediate 파일로 저장
+
+---
+
+# 30. Phase 27 — 수어 모션 및 비수지 표현
+
+## 30-1. 수어 모션 자산
+
+- [ ] `SignMotion` Entity 설계
+- [ ] `motionId` 고유키 설계
+- [ ] `glossCode`와 모션 연결
+- [ ] 손 모양 정보 저장
+- [ ] 움직임 유형 저장
+- [ ] 모션 파일 `FileMetadata` 연결
+- [ ] 모션 duration 저장
+
+## 30-2. 비수지 표현
+
+- [ ] `NonManualSignal` Entity 설계
+- [ ] 표정 유형 저장
+- [ ] 시선 방향 저장
+- [ ] 고개 움직임 저장
+- [ ] 문장 유형별 비수지 규칙 설계
+  - [ ] 요청
+  - [ ] 질문
+  - [ ] 부정
+  - [ ] 강조
+- [ ] 비수지 표현 파일 `FileMetadata` 연결
+
+## 30-3. 모션 시퀀스 생성
+
+- [ ] 글로스별 SignMotion 검색
+- [ ] 비수지 표현 후보 매핑
+- [ ] 모션 duration 기반 timeline 생성
+- [ ] motion blending 규칙 설계
+- [ ] `motion-sequence.json` 산출물 생성
+- [ ] Job intermediate 파일로 저장
+
+---
+
+# 31. Phase 28 — 3D 아바타 타임라인 및 영상 생성
+
+## 31-1. 아바타 모델
+
+- [ ] `AvatarModel` Entity 설계
+- [ ] 기본 아바타 모델 등록
+- [ ] GLB/FBX 파일 `FileMetadata` 연결
+- [ ] skeleton/rig 호환성 정보 저장
+- [ ] avatar version 관리
+
+## 31-2. 아바타 타임라인
+
+- [ ] `AvatarMotionTimeline` 산출물 포맷 설계
+- [ ] SignMotion clip 연결
+- [ ] NonManualSignal clip 연결
+- [ ] startMs/endMs 계산
+- [ ] animation blending 구간 계산
+- [ ] `avatar-timeline.json` 생성
+
+## 31-3. 3D 엔진 연동
+
+- [ ] 3D 엔진 후보 확정
+  - [ ] Blender
+  - [ ] Unity
+  - [ ] Unreal
+  - [ ] Web 기반 Three.js
+- [ ] Python AI API에서 렌더링 Job 요청
+- [ ] 아바타 엔진에 timeline 전달
+- [ ] 렌더링 결과 mp4/webm 생성
+- [ ] `JOB_OUTPUT` 파일 저장
+- [ ] 최종 영상 accessPath 반환
+
+---
+
+# 32. Phase 29 — End-to-End 수어 영상 생성 Job
+
+## 32-1. Job 파이프라인
+
+- [ ] Document 업로드 후 AI Job 생성
+- [ ] Python 텍스트 추출 요청
+- [ ] 문장 분석 결과 저장
+- [ ] 글로스 변환 결과 저장
+- [ ] 모션 시퀀스 결과 저장
+- [ ] 아바타 타임라인 결과 저장
+- [ ] 영상 생성 결과 저장
+- [ ] Job 상태 전이 관리
+
+## 32-2. 최종 산출물
+
+- [ ] `gloss-sequence.json`
+- [ ] `motion-sequence.json`
+- [ ] `avatar-timeline.json`
+- [ ] `sign-video.mp4`
+- [ ] 생성 결과 메타데이터 저장
+- [ ] 프론트엔드에서 영상 재생
+
+---
+
+# 33. 현재 기준 다음 작업
 
 현재 공통 파일 저장 구조, 파일 정책, 정적 리소스 서빙, 파일 메타데이터 Entity 설계가 완료되었으므로 다음 순서로 진행한다.
 
@@ -1517,12 +1732,36 @@ frontend
 - [x] `DocumentIndexStatus` Enum 작성
 - [x] `DocumentRepository` 작성
 - [x] `Document`에서 `FileMetadata` 1:1 참조
-- [ ] 국문 PDF 업로드 Request/Response DTO 작성
-- [ ] `FileUploadValidator`로 `KOREAN_SOURCE_DOCUMENT` 정책 검증
-- [ ] `FileUtil`로 원천 문서 저장
-- [ ] `FileMetadataRepository`로 파일 메타데이터 저장
-- [ ] `DocumentRepository`로 Document 저장
-- [ ] 업로드 실패 시 DB Rollback 및 저장 파일 정리
+- [x] 국문 PDF 업로드 Request/Response DTO 작성
+- [x] `FileUploadValidator`로 `KOREAN_SOURCE_DOCUMENT` 정책 검증
+- [x] `FileUtil`로 원천 문서 저장
+- [x] `FileMetadataRepository`로 파일 메타데이터 저장
+- [x] `DocumentRepository`로 Document 저장
+- [x] 업로드 실패 시 DB Rollback 및 저장 파일 정리
+- [x] 실제 multipart 업로드 요청으로 `201 Created` 검증
+- [x] 응답 `accessPath`로 `/files/**` 파일 조회 검증
+- [x] PDF 이외 파일 업로드 시 400 오류 검증
+
+### 도메인별 Document 참조 구조
+
+- [x] `KoreanSourceDocument` Entity 작성
+- [x] `KoreanSourceDocumentRepository` 작성
+- [x] `SignLanguageDataset` Entity 작성
+- [x] `SignLanguageDatasetRepository` 작성
+- [x] `MuseumManual` Entity 작성
+- [x] `MuseumManualRepository` 작성
+- [x] `MedicalManual` Entity 작성
+- [x] `MedicalManualRepository` 작성
+- [x] 각 도메인 Entity에서 `Document` 1:1 참조
+
+### 다음 작업
+
+- [ ] Document 목록 API 구현
+- [ ] Document 상세 API 구현
+- [ ] 국문 원천 문서 도메인 업로드 흐름에서 `KoreanSourceDocument` 생성 연결
+- [ ] 도메인별 등록 API 설계
+- [ ] 공통 ErrorResponse 적용
+- [ ] 업로드 파일 크기 정책 검증 보강
 
 ### 2순위 — Java↔Python 연동 안정화
 
@@ -1552,7 +1791,7 @@ frontend
 
 ---
 
-# 29. 전체 마일스톤
+# 34. 전체 마일스톤
 
 ## Milestone 1 — 서비스 실행
 
@@ -1619,9 +1858,18 @@ frontend
 - [ ] 수어 콘텐츠 검색
 - [ ] 운영 지표
 
+## Milestone 10 — 수어 3D 아바타 생성
+
+- [ ] 언어 말뭉치 임베딩 적재
+- [ ] 국문-글로스 변환
+- [ ] 수어 모션 데이터 연결
+- [ ] 비수지 표현 적용
+- [ ] 3D 아바타 타임라인 생성
+- [ ] 수어 영상 생성
+
 ---
 
-# 30. 최종 목표 문장
+# 35. 최종 목표 문장
 
 프로젝트가 완료되면 다음과 같이 설명할 수 있어야 한다.
 
@@ -1629,7 +1877,12 @@ frontend
 
 ---
 
-# 31. 문서 업데이트 규칙
+
+최종적으로는 대규모 국문 말뭉치와 도메인 문서를 기반으로 한국어 문장을 분석하고, 국문-글로스 변환, 수어 모션 조합, 비수지 표현 적용, 3D 아바타 타임라인 생성을 거쳐 수어 영상을 생성할 수 있어야 한다.
+
+---
+
+# 36. 문서 업데이트 규칙
 
 작업이 끝날 때마다 다음 규칙으로 체크한다.
 
