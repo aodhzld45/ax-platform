@@ -52,9 +52,11 @@ public class DocumentService {
 
     @Transactional
     public DocumentUploadResponse upload(DocumentUploadRequest request) {
+        FileAssetType assetType = resolveAssetType(request);
+
         fileUploadValidator.validate(
                 request.getFile(),
-                SOURCE_DOCUMENT_TYPE
+                assetType
         );
 
         String resourceKey = UUID.randomUUID().toString();
@@ -63,14 +65,14 @@ public class DocumentService {
 
         try {
             storedFileInfo = fileUtil.saveAsset(
-                    SOURCE_DOCUMENT_TYPE,
+                    assetType,
                     resourceKey,
                     String.valueOf(version),
                     request.getFile()
             );
 
             FileMetadata fileMetadata = FileMetadata.create(
-                    SOURCE_DOCUMENT_TYPE,
+                    assetType,
                     storedFileInfo
             );
             FileMetadata savedFileMetadata =
@@ -96,6 +98,14 @@ public class DocumentService {
             );
             throw e;
         }
+    }
+
+    private FileAssetType resolveAssetType(DocumentUploadRequest request) {
+        if (request.getAssetType() == null) {
+            return SOURCE_DOCUMENT_TYPE;
+        }
+
+        return request.getAssetType();
     }
 
     private DocumentUploadResponse toResponse(

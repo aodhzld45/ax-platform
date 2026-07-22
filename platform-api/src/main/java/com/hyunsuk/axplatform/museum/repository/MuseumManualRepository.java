@@ -9,4 +9,6 @@ public interface MuseumManualRepository
         extends JpaRepository<MuseumManual, Long> {
 
     Optional<MuseumManual> findByDocumentId(Long documentId);
+
+    boolean existsByDocumentId(Long documentId);
 }

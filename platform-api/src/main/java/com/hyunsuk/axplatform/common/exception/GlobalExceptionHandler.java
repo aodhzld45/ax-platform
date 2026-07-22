@@ -3,6 +3,9 @@ package com.hyunsuk.axplatform.common.exception;
 import com.hyunsuk.axplatform.common.file.exception.FilePolicyViolationException;
 import com.hyunsuk.axplatform.document.exception.DocumentNotFoundException;
 import com.hyunsuk.axplatform.korean.exception.KoreanSourceDocumentRegistrationException;
+import com.hyunsuk.axplatform.medical.exception.MedicalManualRegistrationException;
+import com.hyunsuk.axplatform.museum.exception.MuseumManualRegistrationException;
+import com.hyunsuk.axplatform.sign.exception.SignLanguageDatasetRegistrationException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +47,48 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(KoreanSourceDocumentRegistrationException.class)
     public ResponseEntity<ErrorResponse> handleKoreanSourceDocumentRegistration(
             KoreanSourceDocumentRegistrationException exception,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.of(
+                        exception.getErrorCode(),
+                        exception.getMessage(),
+                        request.getRequestURI()
+                ));
+    }
+
+    @ExceptionHandler(SignLanguageDatasetRegistrationException.class)
+    public ResponseEntity<ErrorResponse> handleSignLanguageDatasetRegistration(
+            SignLanguageDatasetRegistrationException exception,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.of(
+                        exception.getErrorCode(),
+                        exception.getMessage(),
+                        request.getRequestURI()
+                ));
+    }
+
+    @ExceptionHandler(MuseumManualRegistrationException.class)
+    public ResponseEntity<ErrorResponse> handleMuseumManualRegistration(
+            MuseumManualRegistrationException exception,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.of(
+                        exception.getErrorCode(),
+                        exception.getMessage(),
+                        request.getRequestURI()
+                ));
+    }
+
+    @ExceptionHandler(MedicalManualRegistrationException.class)
+    public ResponseEntity<ErrorResponse> handleMedicalManualRegistration(
+            MedicalManualRegistrationException exception,
             HttpServletRequest request
     ) {
         return ResponseEntity

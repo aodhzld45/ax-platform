@@ -9,4 +9,6 @@ public interface SignLanguageDatasetRepository
         extends JpaRepository<SignLanguageDataset, Long> {
 
     Optional<SignLanguageDataset> findByDocumentId(Long documentId);
+
+    boolean existsByDocumentId(Long documentId);
 }

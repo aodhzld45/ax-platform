@@ -1,5 +1,6 @@
 package com.hyunsuk.axplatform.document.dto;
 
+import com.hyunsuk.axplatform.common.file.type.FileAssetType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -15,4 +16,6 @@ public class DocumentUploadRequest {
 
     @NotBlank
     private String title;
+
+    private FileAssetType assetType;
 }

@@ -19,6 +19,38 @@ public enum FileUploadPolicy {
                     )
             ),
             100L * 1024L * 1024L
+    ),
+
+    PARALLEL_CORPUS(
+            FileAssetType.PARALLEL_CORPUS,
+            Map.of(
+                    "json", Set.of(
+                            "application/json",
+                            "text/json"
+                    ),
+                    "csv", Set.of(
+                            "text/csv",
+                            "application/csv",
+                            "application/vnd.ms-excel"
+                    )
+            ),
+            100L * 1024L * 1024L
+    ),
+
+    GLOSS_DICTIONARY(
+            FileAssetType.GLOSS_DICTIONARY,
+            Map.of(
+                    "json", Set.of(
+                            "application/json",
+                            "text/json"
+                    ),
+                    "csv", Set.of(
+                            "text/csv",
+                            "application/csv",
+                            "application/vnd.ms-excel"
+                    )
+            ),
+            50L * 1024L * 1024L
     );
 
     private final FileAssetType assetType;

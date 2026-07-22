@@ -9,4 +9,6 @@ public interface MedicalManualRepository
         extends JpaRepository<MedicalManual, Long> {
 
     Optional<MedicalManual> findByDocumentId(Long documentId);
+
+    boolean existsByDocumentId(Long documentId);
 }
