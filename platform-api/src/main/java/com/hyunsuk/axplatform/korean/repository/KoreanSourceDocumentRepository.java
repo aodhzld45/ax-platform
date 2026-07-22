@@ -9,4 +9,6 @@ public interface KoreanSourceDocumentRepository
         extends JpaRepository<KoreanSourceDocument, Long> {
 
     Optional<KoreanSourceDocument> findByDocumentId(Long documentId);
+
+    boolean existsByDocumentId(Long documentId);
 }

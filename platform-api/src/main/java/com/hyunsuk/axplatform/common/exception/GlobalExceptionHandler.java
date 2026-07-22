@@ -2,6 +2,7 @@ package com.hyunsuk.axplatform.common.exception;
 
 import com.hyunsuk.axplatform.common.file.exception.FilePolicyViolationException;
 import com.hyunsuk.axplatform.document.exception.DocumentNotFoundException;
+import com.hyunsuk.axplatform.korean.exception.KoreanSourceDocumentRegistrationException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +36,20 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponse.of(
                         "DOCUMENT_NOT_FOUND",
+                        exception.getMessage(),
+                        request.getRequestURI()
+                ));
+    }
+
+    @ExceptionHandler(KoreanSourceDocumentRegistrationException.class)
+    public ResponseEntity<ErrorResponse> handleKoreanSourceDocumentRegistration(
+            KoreanSourceDocumentRegistrationException exception,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.of(
+                        exception.getErrorCode(),
                         exception.getMessage(),
                         request.getRequestURI()
                 ));
