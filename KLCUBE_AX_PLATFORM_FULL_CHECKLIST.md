@@ -410,7 +410,7 @@ Document 업로드 API 구현
 → DocumentRepository로 Document 저장 연결 완료
 → 업로드 실패 시 DB Rollback 및 파일 정리 정책 적용 완료
 → multipart 업로드 201 Created, /files/** 조회, 비허용 파일 400 검증 완료
-→ 다음: KoreanSourceDocument 도메인 등록 API 구현
+→ 다음: 도메인별 목록/상세 조회 API 및 Document 페이지네이션 구현
 ```
 
 ## 현재 프로토타입 파일 처리 흐름
@@ -1758,7 +1758,7 @@ frontend
 
 - [x] Document 목록 API 구현
 - [x] Document 상세 API 구현
-- [ ] 국문 원천 문서 도메인 업로드 흐름에서 `KoreanSourceDocument` 생성 연결
+- [x] 국문 원천 문서 도메인 업로드 흐름에서 `KoreanSourceDocument` 생성 연결
 - [x] 도메인별 등록 API 설계
 - [x] 공통 ErrorResponse 적용
 - [x] 업로드 파일 크기 정책 검증 보강
@@ -1767,9 +1767,27 @@ frontend
 - [x] `ErrorResponse` 및 `GlobalExceptionHandler` 적용
 - [x] `FileUploadPolicy.maxFileSizeBytes` 기반 파일 크기 정책 검증
 - [x] `DOMAIN_REGISTRATION_API_DESIGN.md` 도메인별 등록 API 설계 작성
-- [ ] KoreanSourceDocument 도메인 등록 API 구현
-- [ ] SignLanguageDataset 도메인 등록 API 구현
-- [ ] MuseumManual / MedicalManual 도메인 등록 API 구현
+- [x] KoreanSourceDocument 도메인 등록 API 구현
+- [x] `POST /api/v1/korean-source-documents` 구현
+- [x] `Document` 존재 여부 검증
+- [x] `KOREAN_SOURCE_DOCUMENT` 파일 자산 타입 검증
+- [x] 같은 `Document` 중복 등록 방지
+- [x] KoreanSourceDocument 등록 성공 및 중복 등록 오류 테스트
+- [x] SignLanguageDataset 등록 API 설계
+- [x] SignLanguageDataset 허용 파일 자산 타입을 `PARALLEL_CORPUS`, `GLOSS_DICTIONARY`로 결정
+- [x] SignLanguageDataset 등록 전 Document 업로드 assetType 확장 필요사항 명시
+- [x] Document 업로드 API에서 `PARALLEL_CORPUS` / `GLOSS_DICTIONARY` 저장 경로 확장
+- [x] `DocumentUploadRequest.assetType` 추가
+- [x] `FileUploadPolicy`에 `PARALLEL_CORPUS` / `GLOSS_DICTIONARY` JSON/CSV 정책 추가
+- [x] SignLanguageDataset 도메인 등록 API 구현
+- [x] `POST /api/v1/sign-language-datasets` 구현
+- [x] SignLanguageDataset 등록 시 `PARALLEL_CORPUS` / `GLOSS_DICTIONARY` assetType 검증
+- [x] SignLanguageDataset 중복 등록 방지
+- [x] MuseumManual / MedicalManual 도메인 등록 API 구현
+- [x] `POST /api/v1/museum-manuals` 구현
+- [x] `POST /api/v1/medical-manuals` 구현
+- [x] 도메인 등록 API 성공/오류 테스트 추가
+- [ ] 도메인별 목록/상세 조회 API 구현
 - [ ] Document 목록 API 페이지네이션 및 상태 필터 적용
 
 ### 2순위 — Java↔Python 연동 안정화
