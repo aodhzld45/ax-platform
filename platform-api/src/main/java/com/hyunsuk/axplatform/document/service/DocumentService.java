@@ -6,13 +6,18 @@ import com.hyunsuk.axplatform.common.file.entity.FileMetadata;
 import com.hyunsuk.axplatform.common.file.repository.FileMetadataRepository;
 import com.hyunsuk.axplatform.common.file.type.FileAssetType;
 import com.hyunsuk.axplatform.common.file.validator.FileUploadValidator;
+import com.hyunsuk.axplatform.document.dto.DocumentListResponse;
 import com.hyunsuk.axplatform.document.dto.DocumentUploadRequest;
 import com.hyunsuk.axplatform.document.dto.DocumentUploadResponse;
 import com.hyunsuk.axplatform.document.dto.DocumentResponse;
 import com.hyunsuk.axplatform.document.entity.Document;
+import com.hyunsuk.axplatform.document.entity.DocumentIndexStatus;
+import com.hyunsuk.axplatform.document.entity.DocumentStatus;
 import com.hyunsuk.axplatform.document.exception.DocumentNotFoundException;
 import com.hyunsuk.axplatform.document.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,11 +38,27 @@ public class DocumentService {
     private final DocumentRepository documentRepository;
 
     @Transactional(readOnly = true)
-    public List<DocumentResponse> findAll() {
-        return documentRepository.findAllByOrderByIdDesc()
+    public DocumentListResponse findAll(
+            DocumentStatus documentStatus,
+            DocumentIndexStatus indexStatus,
+            Pageable pageable
+    ) {
+        Page<Document> page = documentRepository.findAllByFilters(
+                documentStatus,
+                indexStatus,
+                pageable
+        );
+
+        List<DocumentResponse> items = page.getContent()
                 .stream()
                 .map(DocumentResponse::from)
                 .toList();
+
+        return DocumentListResponse.of(
+                items,
+                page.getTotalElements(),
+                page.getTotalPages()
+        );
     }
 
     @Transactional(readOnly = true)

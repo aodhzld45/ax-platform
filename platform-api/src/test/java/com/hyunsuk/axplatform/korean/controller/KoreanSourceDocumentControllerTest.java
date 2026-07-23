@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.nio.file.Path;
 import java.util.Map;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -49,7 +50,7 @@ class KoreanSourceDocumentControllerTest {
             throws Exception {
         long documentId = uploadKoreanSourceDocument();
 
-        mockMvc.perform(
+        MvcResult result = mockMvc.perform(
                         post("/api/v1/korean-source-documents")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(
@@ -77,6 +78,37 @@ class KoreanSourceDocumentControllerTest {
                         .value("Public service source text"))
                 .andExpect(jsonPath("$.file.assetType")
                         .value("KOREAN_SOURCE_DOCUMENT"))
+                .andExpect(jsonPath("$.file.originalFileName")
+                        .value("korean-source.pdf"))
+                .andReturn();
+
+        JsonNode response = objectMapper.readTree(
+                result.getResponse().getContentAsString()
+        );
+        long koreanSourceDocumentId =
+                response.get("koreanSourceDocumentId").asLong();
+
+        mockMvc.perform(
+                        get("/api/v1/korean-source-documents")
+                                .param("page", "0")
+                                .param("size", "10")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].koreanSourceDocumentId")
+                        .exists())
+                .andExpect(jsonPath("$.totalCount").exists())
+                .andExpect(jsonPath("$.totalPages").exists());
+
+        mockMvc.perform(
+                        get(
+                                "/api/v1/korean-source-documents/{id}",
+                                koreanSourceDocumentId
+                        )
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.koreanSourceDocumentId")
+                        .value(koreanSourceDocumentId))
+                .andExpect(jsonPath("$.documentId").value(documentId))
                 .andExpect(jsonPath("$.file.originalFileName")
                         .value("korean-source.pdf"));
     }

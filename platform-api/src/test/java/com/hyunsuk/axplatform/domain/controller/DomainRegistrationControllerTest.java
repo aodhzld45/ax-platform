@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -57,7 +58,7 @@ class DomainRegistrationControllerTest {
                 FileAssetType.PARALLEL_CORPUS
         );
 
-        mockMvc.perform(
+        MvcResult result = mockMvc.perform(
                         post("/api/v1/sign-language-datasets")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(
@@ -77,6 +78,35 @@ class DomainRegistrationControllerTest {
                         .value("PARALLEL_CORPUS"))
                 .andExpect(jsonPath("$.file.assetType")
                         .value("PARALLEL_CORPUS"))
+                .andExpect(jsonPath("$.file.originalFileName")
+                        .value("parallel-corpus.csv"))
+                .andReturn();
+
+        long signLanguageDatasetId = objectMapper.readTree(
+                result.getResponse().getContentAsString()
+        ).get("signLanguageDatasetId").asLong();
+
+        mockMvc.perform(
+                        get("/api/v1/sign-language-datasets")
+                                .param("page", "0")
+                                .param("size", "10")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].signLanguageDatasetId")
+                        .exists())
+                .andExpect(jsonPath("$.totalCount").exists())
+                .andExpect(jsonPath("$.totalPages").exists());
+
+        mockMvc.perform(
+                        get(
+                                "/api/v1/sign-language-datasets/{id}",
+                                signLanguageDatasetId
+                        )
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.signLanguageDatasetId")
+                        .value(signLanguageDatasetId))
+                .andExpect(jsonPath("$.documentId").value(documentId))
                 .andExpect(jsonPath("$.file.originalFileName")
                         .value("parallel-corpus.csv"));
     }
@@ -140,7 +170,7 @@ class DomainRegistrationControllerTest {
     void registerMuseumManualReturnsCreated() throws Exception {
         long documentId = uploadKoreanSourceDocument("Museum manual");
 
-        mockMvc.perform(
+        MvcResult result = mockMvc.perform(
                         post("/api/v1/museum-manuals")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(
@@ -159,14 +189,36 @@ class DomainRegistrationControllerTest {
                 .andExpect(jsonPath("$.museumName")
                         .value("National Museum"))
                 .andExpect(jsonPath("$.file.assetType")
-                        .value("KOREAN_SOURCE_DOCUMENT"));
+                        .value("KOREAN_SOURCE_DOCUMENT"))
+                .andReturn();
+
+        long museumManualId = objectMapper.readTree(
+                result.getResponse().getContentAsString()
+        ).get("museumManualId").asLong();
+
+        mockMvc.perform(
+                        get("/api/v1/museum-manuals")
+                                .param("page", "0")
+                                .param("size", "10")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].museumManualId").exists())
+                .andExpect(jsonPath("$.totalCount").exists())
+                .andExpect(jsonPath("$.totalPages").exists());
+
+        mockMvc.perform(get("/api/v1/museum-manuals/{id}", museumManualId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.museumManualId").value(museumManualId))
+                .andExpect(jsonPath("$.documentId").value(documentId))
+                .andExpect(jsonPath("$.museumName")
+                        .value("National Museum"));
     }
 
     @Test
     void registerMedicalManualReturnsCreated() throws Exception {
         long documentId = uploadKoreanSourceDocument("Medical manual");
 
-        mockMvc.perform(
+        MvcResult result = mockMvc.perform(
                         post("/api/v1/medical-manuals")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(
@@ -185,7 +237,30 @@ class DomainRegistrationControllerTest {
                 .andExpect(jsonPath("$.department")
                         .value("Emergency"))
                 .andExpect(jsonPath("$.file.assetType")
-                        .value("KOREAN_SOURCE_DOCUMENT"));
+                        .value("KOREAN_SOURCE_DOCUMENT"))
+                .andReturn();
+
+        long medicalManualId = objectMapper.readTree(
+                result.getResponse().getContentAsString()
+        ).get("medicalManualId").asLong();
+
+        mockMvc.perform(
+                        get("/api/v1/medical-manuals")
+                                .param("page", "0")
+                                .param("size", "10")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].medicalManualId").exists())
+                .andExpect(jsonPath("$.totalCount").exists())
+                .andExpect(jsonPath("$.totalPages").exists());
+
+        mockMvc.perform(get("/api/v1/medical-manuals/{id}", medicalManualId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.medicalManualId")
+                        .value(medicalManualId))
+                .andExpect(jsonPath("$.documentId").value(documentId))
+                .andExpect(jsonPath("$.department")
+                        .value("Emergency"));
     }
 
     private long uploadKoreanSourceDocument(String title) throws Exception {

@@ -4,15 +4,19 @@ import com.hyunsuk.axplatform.common.file.type.FileAssetType;
 import com.hyunsuk.axplatform.document.entity.Document;
 import com.hyunsuk.axplatform.document.exception.DocumentNotFoundException;
 import com.hyunsuk.axplatform.document.repository.DocumentRepository;
+import com.hyunsuk.axplatform.sign.dto.SignLanguageDatasetListResponse;
 import com.hyunsuk.axplatform.sign.dto.SignLanguageDatasetRequest;
 import com.hyunsuk.axplatform.sign.dto.SignLanguageDatasetResponse;
 import com.hyunsuk.axplatform.sign.entity.SignLanguageDataset;
 import com.hyunsuk.axplatform.sign.exception.SignLanguageDatasetRegistrationException;
 import com.hyunsuk.axplatform.sign.repository.SignLanguageDatasetRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -26,6 +30,42 @@ public class SignLanguageDatasetService {
 
     private final DocumentRepository documentRepository;
     private final SignLanguageDatasetRepository signLanguageDatasetRepository;
+
+    @Transactional(readOnly = true)
+    public SignLanguageDatasetListResponse findAll(Pageable pageable) {
+        Page<SignLanguageDataset> page =
+                signLanguageDatasetRepository.findAllByOrderByIdDesc(
+                        pageable
+                );
+
+        List<SignLanguageDatasetResponse> items = page.getContent()
+                .stream()
+                .map(SignLanguageDatasetResponse::from)
+                .toList();
+
+        return SignLanguageDatasetListResponse.of(
+                items,
+                page.getTotalElements(),
+                page.getTotalPages()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public SignLanguageDatasetResponse findById(
+            Long signLanguageDatasetId
+    ) {
+        SignLanguageDataset signLanguageDataset =
+                signLanguageDatasetRepository
+                        .findWithDocumentById(signLanguageDatasetId)
+                        .orElseThrow(() ->
+                                new SignLanguageDatasetRegistrationException(
+                                        "SIGN_LANGUAGE_DATASET_NOT_FOUND",
+                                        "Sign language dataset not found. id="
+                                                + signLanguageDatasetId
+                                ));
+
+        return SignLanguageDatasetResponse.from(signLanguageDataset);
+    }
 
     @Transactional
     public SignLanguageDatasetResponse register(

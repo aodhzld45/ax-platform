@@ -88,10 +88,31 @@ class DocumentControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().bytes(pdfBytes));
 
-        mockMvc.perform(get("/api/v1/documents"))
+        mockMvc.perform(
+                        get("/api/v1/documents")
+                                .param("page", "0")
+                                .param("size", "10")
+                )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].documentId").exists())
-                .andExpect(jsonPath("$[0].file.accessPath").exists());
+                .andExpect(jsonPath("$.items[0].documentId").exists())
+                .andExpect(jsonPath("$.items[0].file.accessPath").exists())
+                .andExpect(jsonPath("$.totalCount").exists())
+                .andExpect(jsonPath("$.totalPages").exists());
+
+        mockMvc.perform(
+                        get("/api/v1/documents")
+                                .param("page", "0")
+                                .param("size", "10")
+                                .param("documentStatus", "ACTIVE")
+                                .param("indexStatus", "NOT_REQUESTED")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].documentStatus")
+                        .value("ACTIVE"))
+                .andExpect(jsonPath("$.items[0].indexStatus")
+                        .value("NOT_REQUESTED"))
+                .andExpect(jsonPath("$.totalCount").exists())
+                .andExpect(jsonPath("$.totalPages").exists());
 
         mockMvc.perform(get("/api/v1/documents/{documentId}", documentId))
                 .andExpect(status().isOk())
