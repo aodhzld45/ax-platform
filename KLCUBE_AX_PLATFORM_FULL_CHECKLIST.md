@@ -410,7 +410,7 @@ Document 업로드 API 구현
 → DocumentRepository로 Document 저장 연결 완료
 → 업로드 실패 시 DB Rollback 및 파일 정리 정책 적용 완료
 → multipart 업로드 201 Created, /files/** 조회, 비허용 파일 400 검증 완료
-→ 다음: 도메인별 목록/상세 조회 API 및 Document 페이지네이션 구현
+→ 다음: Java-Python 연동 예외 처리 및 통합 서비스 상태 API 구현
 ```
 
 ## 현재 프로토타입 파일 처리 흐름
@@ -1787,8 +1787,27 @@ frontend
 - [x] `POST /api/v1/museum-manuals` 구현
 - [x] `POST /api/v1/medical-manuals` 구현
 - [x] 도메인 등록 API 성공/오류 테스트 추가
-- [ ] 도메인별 목록/상세 조회 API 구현
-- [ ] Document 목록 API 페이지네이션 및 상태 필터 적용
+- [x] 도메인별 목록/상세 조회 API 구현
+- [x] `KoreanSourceDocumentListResponse` 작성
+- [x] `SignLanguageDatasetListResponse` 작성
+- [x] `MuseumManualListResponse` 작성
+- [x] `MedicalManualListResponse` 작성
+- [x] `GET /api/v1/korean-source-documents` 목록 조회 구현
+- [x] `GET /api/v1/korean-source-documents/{id}` 상세 조회 구현
+- [x] `GET /api/v1/sign-language-datasets` 목록 조회 구현
+- [x] `GET /api/v1/sign-language-datasets/{id}` 상세 조회 구현
+- [x] `GET /api/v1/museum-manuals` 목록 조회 구현
+- [x] `GET /api/v1/museum-manuals/{id}` 상세 조회 구현
+- [x] `GET /api/v1/medical-manuals` 목록 조회 구현
+- [x] `GET /api/v1/medical-manuals/{id}` 상세 조회 구현
+- [x] 도메인 목록/상세 API 테스트 추가
+- [x] Document 목록 API 페이지네이션 및 상태 필터 적용
+- [x] `DocumentListResponse` 작성
+- [x] `GET /api/v1/documents?page=0&size=20` 페이지네이션 응답 적용
+- [x] `documentStatus` 필터 적용
+- [x] `indexStatus` 필터 적용
+- [x] `items`, `totalCount`, `totalPages` 응답 구조 적용
+- [x] Document 목록 페이지네이션 및 상태 필터 테스트 추가
 
 ### 2순위 — Java↔Python 연동 안정화
 
