@@ -582,6 +582,43 @@ Content-Disposition: attachment; filename*=UTF-8''민원안내.pdf
 
 ## 10. AiJob 연동 설계
 
+### 10.0 Java-Python 통합 상태 확인 API
+
+AI Job 생성 전에 Java Platform API와 Python AI API의 연결 상태를 확인할 수 있는 운영 API를 제공한다.
+이 API는 대시보드와 운영 점검용이므로 Python이 내려가 있어도 HTTP 500을 반환하지 않고, 응답 본문에 각 서비스 상태를 분리해서 표시한다.
+
+```http
+GET /api/v1/system/services
+```
+
+응답 예시:
+
+```json
+{
+  "platformApi": {
+    "status": "UP",
+    "latencyMs": 0
+  },
+  "aiApi": {
+    "status": "DOWN",
+    "latencyMs": 3,
+    "errorCode": "AI_API_UNAVAILABLE",
+    "message": "Python AI API is unavailable."
+  }
+}
+```
+
+처리 정책:
+
+```text
+1. Java Platform API는 현재 애플리케이션 기준으로 UP 반환
+2. Python AI API는 RestClient로 /api/v1/health 호출
+3. 호출 성공 시 aiApi.status = UP
+4. 연결 실패, 4xx/5xx, timeout 계열 예외 발생 시 aiApi.status = DOWN
+5. 상태 확인 API 자체는 200 OK 반환
+6. 실제 Python 처리 요청의 실패 정책은 AiJob 상태 전이에서 별도로 관리
+```
+
 ### 10.1 Job 필드
 
 | 필드 | 설명 |
@@ -1000,6 +1037,9 @@ com.hyunsuk.axplatform
 
 - [ ] `AiJob` 엔티티 및 상태 정의
 - [ ] 문서 기반 PENDING Job 생성
+- [x] Java-Python 통합 서비스 상태 API 구현
+- [x] Python Health API 호출
+- [x] Python API DOWN 상태 응답 정책 적용
 - [ ] Java → Python 처리 요청
 - [ ] Timeout 및 4xx/5xx 예외 변환
 - [ ] Callback API

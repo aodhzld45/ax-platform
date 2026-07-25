@@ -410,7 +410,7 @@ Document 업로드 API 구현
 → DocumentRepository로 Document 저장 연결 완료
 → 업로드 실패 시 DB Rollback 및 파일 정리 정책 적용 완료
 → multipart 업로드 201 Created, /files/** 조회, 비허용 파일 400 검증 완료
-→ 다음: Java-Python 연동 예외 처리 및 통합 서비스 상태 API 구현
+→ 다음: AI Job Entity 및 상태 전이 설계
 ```
 
 ## 현재 프로토타입 파일 처리 흐름
@@ -600,7 +600,7 @@ ai:
 
 ## 6-6. 예외 처리 보강
 
-- [ ] Python 서버가 꺼졌을 때 연결 오류 처리
+- [x] Python 서버가 꺼졌을 때 연결 오류 처리
 - [ ] Connect Timeout 응답 처리
 - [ ] Read Timeout 응답 처리
 - [ ] Python 4xx 응답 변환
@@ -632,12 +632,12 @@ GET /api/v1/system/services
 }
 ```
 
-- [ ] Java 자체 상태 조회
-- [ ] Python Health API 호출
-- [ ] 호출 Latency 계산
-- [ ] Python 장애 시 `DOWN` 표시
-- [ ] 통합 상태 응답 DTO 작성
-- [ ] Controller 테스트 작성
+- [x] Java 자체 상태 조회
+- [x] Python Health API 호출
+- [x] 호출 Latency 계산
+- [x] Python 장애 시 `DOWN` 표시
+- [x] 통합 상태 응답 DTO 작성
+- [x] Controller 테스트 작성
 
 ## Phase 3 완료 기준
 
@@ -645,8 +645,8 @@ GET /api/v1/system/services
 - [x] 요청 데이터가 Python에 전달된다.
 - [x] Python 처리 결과가 Java로 돌아온다.
 - [x] Java가 최종 JSON 응답을 반환한다.
-- [ ] Python 장애 상황을 Java가 안정적으로 처리한다.
-- [ ] 서비스 통합 상태 API가 완성된다.
+- [x] Python 장애 상황을 Java가 안정적으로 처리한다.
+- [x] 서비스 통합 상태 API가 완성된다.
 
 ---
 
@@ -1811,23 +1811,31 @@ frontend
 
 ### 2순위 — Java↔Python 연동 안정화
 
-- [ ] Python 서버 중지 시 예외 처리
+- [x] Python 서버 중지 시 예외 처리
 - [ ] Timeout 처리
 - [ ] 공통 Error Response
-- [ ] 통합 서비스 상태 API
+- [x] 통합 서비스 상태 API
+- [x] `GET /api/v1/system/services` 구현
+- [x] Java Platform API 상태 `UP` 반환
+- [x] Python AI API Health 호출 및 latency 계산
+- [x] Python AI API 장애 시 전체 API는 `200 OK`, `aiApi.status = DOWN`으로 응답
+- [x] 통합 서비스 상태 API 테스트 추가
 - [ ] 요청 ID 전달
 
-### 3순위 — PostgreSQL 및 Flyway
+### 3순위 — AI Job
+
+- [ ] AiJob Entity
+- [ ] AiJobStatus Enum
+- [ ] AiJobStage Enum
+- [ ] 인덱싱 Job 생성
+- [ ] Python 문서 처리 요청 상태 전이 설계
+
+### 4순위 — PostgreSQL 및 Flyway
 
 - [ ] Docker PostgreSQL
 - [ ] PostgreSQL Driver
 - [ ] Flyway
 - [x] BaseEntity
-
-### 4순위 — AI Job
-
-- [ ] AiJob Entity
-- [ ] 인덱싱 Job 생성
 
 ### 5순위 — Python 문서 파싱
 
