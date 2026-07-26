@@ -1,5 +1,6 @@
 package com.hyunsuk.axplatform.common.exception;
 
+import com.hyunsuk.axplatform.aijob.exception.AiJobNotFoundException;
 import com.hyunsuk.axplatform.common.file.exception.FilePolicyViolationException;
 import com.hyunsuk.axplatform.document.exception.DocumentNotFoundException;
 import com.hyunsuk.axplatform.korean.exception.KoreanSourceDocumentRegistrationException;
@@ -39,6 +40,20 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponse.of(
                         "DOCUMENT_NOT_FOUND",
+                        exception.getMessage(),
+                        request.getRequestURI()
+                ));
+    }
+
+    @ExceptionHandler(AiJobNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAiJobNotFound(
+            AiJobNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.of(
+                        "AI_JOB_NOT_FOUND",
                         exception.getMessage(),
                         request.getRequestURI()
                 ));

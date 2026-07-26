@@ -1,0 +1,14 @@
+package com.hyunsuk.axplatform.aijob.entity;
+
+public enum AiJobStage {
+
+    FILE_PREPARATION,
+    TEXT_EXTRACTION,
+    KOREAN_NORMALIZATION,
+    GLOSS_GENERATION,
+    MOTION_MAPPING,
+    NON_MANUAL_MAPPING,
+    AVATAR_TIMELINE_BUILD,
+    RENDERING,
+    RESULT_FINALIZATION
+}
