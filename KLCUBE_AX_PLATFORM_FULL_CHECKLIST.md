@@ -410,7 +410,7 @@ Document 업로드 API 구현
 → DocumentRepository로 Document 저장 연결 완료
 → 업로드 실패 시 DB Rollback 및 파일 정리 정책 적용 완료
 → multipart 업로드 201 Created, /files/** 조회, 비허용 파일 400 검증 완료
-→ 다음: AI Job Entity 및 상태 전이 설계
+→ 다음: Python 문서 처리 요청 연동 및 AiJob 상태 전이 구현
 ```
 
 ## 현재 프로토타입 파일 처리 흐름
@@ -767,12 +767,13 @@ updatedAt
 
 ## 9-1. AI Job 모델
 
-- [ ] `AiJob` Entity
-- [ ] `AiJobType` Enum
-- [ ] `AiJobStatus` Enum
-- [ ] `AiJobRepository`
-- [ ] Service
-- [ ] Controller
+- [x] `AiJob` Entity
+- [x] `AiJobType` Enum
+- [x] `AiJobStatus` Enum
+- [x] `AiJobStage` Enum
+- [x] `AiJobRepository`
+- [x] Service
+- [x] Controller
 - [ ] 상태 변경 검증
 
 ## 권장 상태
@@ -808,18 +809,18 @@ updatedAt
 
 ## 9-2. AI Job API
 
-- [ ] Job 생성
-- [ ] Job 목록
-- [ ] Job 상세
+- [x] Job 생성
+- [x] Job 목록
+- [x] Job 상세
 - [ ] Job 상태 갱신
 - [ ] Job 실패 처리
 - [ ] Job 재시도
-- [ ] 진행률 표시
+- [x] 진행률 표시
 - [ ] 오래된 Processing Job 복구 정책
 
 ## 완료 기준
 
-- [ ] 문서 업로드 시 AI Job이 생성된다.
+- [x] 문서 기준으로 PENDING AI Job을 생성할 수 있다.
 - [ ] Job 상태가 단계별로 변경된다.
 - [ ] 실패 사유와 재시도 횟수가 저장된다.
 
@@ -858,7 +859,7 @@ POST /api/v1/ingestion/jobs
 
 ## 10-2. 처리 흐름
 
-- [ ] Java에서 AI Job을 `PENDING`으로 생성
+- [x] Java에서 AI Job을 `PENDING`으로 생성
 - [ ] Python 인덱싱 API 호출
 - [ ] Python에서 `PROCESSING` 처리
 - [ ] 문서 파싱
@@ -1824,11 +1825,17 @@ frontend
 
 ### 3순위 — AI Job
 
-- [ ] AiJob Entity
-- [ ] AiJobStatus Enum
-- [ ] AiJobStage Enum
-- [ ] 인덱싱 Job 생성
-- [ ] Python 문서 처리 요청 상태 전이 설계
+- [x] AiJob Entity
+- [x] AiJobStatus Enum
+- [x] AiJobStage Enum
+- [x] AiJobType Enum
+- [x] AiJobRepository
+- [x] Document 기반 PENDING Job 생성 API
+- [x] AiJob 상세 조회 API
+- [x] Document별 AiJob 목록 조회 API
+- [x] AiJob 생성/조회/오류 테스트
+- [ ] Python 문서 처리 요청 연동
+- [ ] Python 문서 처리 요청 상태 전이 구현
 
 ### 4순위 — PostgreSQL 및 Flyway
 

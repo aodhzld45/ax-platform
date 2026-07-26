@@ -636,6 +636,9 @@ GET /api/v1/system/services
 | `startedAt` | 시작일시 |
 | `completedAt` | 완료일시 |
 
+> 구현 상태: `AiJob`, `AiJobStatus`, `AiJobStage`, `AiJobType`, `AiJobRepository` 1차 구현을 완료했다.
+> 현재는 Python 호출 전 단계로, 문서 기준 `PENDING` Job을 생성하고 조회하는 운영 기반만 제공한다.
+
 ### 10.2 권장 상태
 
 ```java
@@ -659,7 +662,7 @@ public enum AiJobStage {
     GLOSS_GENERATION,
     MOTION_MAPPING,
     NON_MANUAL_MAPPING,
-    AVATAR_SCENE_BUILD,
+    AVATAR_TIMELINE_BUILD,
     RENDERING,
     RESULT_FINALIZATION
 }
@@ -675,6 +678,25 @@ FILE_PREPARATION
 ```
 
 ### 10.4 Java → Python 요청
+
+현재 Java API 1차 구현 범위:
+
+```text
+POST /api/v1/documents/{documentId}/ai-jobs
+GET  /api/v1/ai-jobs/{jobKey}
+GET  /api/v1/documents/{documentId}/ai-jobs
+```
+
+현재 생성 API는 Python 호출을 수행하지 않고 다음 초기 상태로 Job을 생성한다.
+
+```text
+status       = PENDING
+currentStage = FILE_PREPARATION
+progress     = 0
+retryCount   = 0
+```
+
+다음 단계에서 아래 요청 계약을 사용해 Python AI API 호출과 Callback 기반 상태 전이를 연결한다.
 
 같은 볼륨을 공유하는 로컬 프로토타입:
 
@@ -1035,8 +1057,11 @@ com.hyunsuk.axplatform
 
 ### Phase 3. AI Job 연동
 
-- [ ] `AiJob` 엔티티 및 상태 정의
-- [ ] 문서 기반 PENDING Job 생성
+- [x] `AiJob` 엔티티 및 상태 정의
+- [x] 문서 기반 PENDING Job 생성
+- [x] AiJob 상세 조회 API
+- [x] Document별 AiJob 목록 조회 API
+- [x] AiJob 생성/조회 테스트
 - [x] Java-Python 통합 서비스 상태 API 구현
 - [x] Python Health API 호출
 - [x] Python API DOWN 상태 응답 정책 적용
