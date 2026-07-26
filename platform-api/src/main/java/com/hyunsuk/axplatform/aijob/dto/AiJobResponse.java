@@ -22,6 +22,8 @@ public class AiJobResponse {
     private final AiJobStage currentStage;
     private final int progress;
     private final int retryCount;
+    private final int maxRetryCount;
+    private final String resultJson;
     private final String errorCode;
     private final String errorMessage;
     private final LocalDateTime requestedAt;
@@ -41,6 +43,8 @@ public class AiJobResponse {
                 .currentStage(aiJob.getCurrentStage())
                 .progress(aiJob.getProgress())
                 .retryCount(aiJob.getRetryCount())
+                .maxRetryCount(aiJob.getMaxRetryCount())
+                .resultJson(aiJob.getResultJson())
                 .errorCode(aiJob.getErrorCode())
                 .errorMessage(aiJob.getErrorMessage())
                 .requestedAt(aiJob.getRequestedAt())

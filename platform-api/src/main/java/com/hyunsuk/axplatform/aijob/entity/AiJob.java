@@ -11,6 +11,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -55,6 +56,13 @@ public class AiJob extends BaseTimeEntity {
     @Column(name = "retry_count", nullable = false)
     private int retryCount;
 
+    @Column(name = "max_retry_count", nullable = false)
+    private int maxRetryCount;
+
+    @Lob
+    @Column(name = "result_json")
+    private String resultJson;
+
     @Column(name = "error_code", length = 100)
     private String errorCode;
 
@@ -79,6 +87,8 @@ public class AiJob extends BaseTimeEntity {
             AiJobStage currentStage,
             Integer progress,
             Integer retryCount,
+            Integer maxRetryCount,
+            String resultJson,
             String errorCode,
             String errorMessage,
             LocalDateTime requestedAt,
@@ -98,6 +108,8 @@ public class AiJob extends BaseTimeEntity {
                 : currentStage;
         this.progress = progress == null ? 0 : progress;
         this.retryCount = retryCount == null ? 0 : retryCount;
+        this.maxRetryCount = maxRetryCount == null ? 3 : maxRetryCount;
+        this.resultJson = resultJson;
         this.errorCode = errorCode;
         this.errorMessage = errorMessage;
         this.requestedAt = requestedAt == null
@@ -120,7 +132,100 @@ public class AiJob extends BaseTimeEntity {
                 .currentStage(AiJobStage.FILE_PREPARATION)
                 .progress(0)
                 .retryCount(0)
+                .maxRetryCount(3)
                 .requestedAt(LocalDateTime.now())
                 .build();
+    }
+
+    public void start() {
+        validateTransition(AiJobStatus.PROCESSING);
+
+        this.status = AiJobStatus.PROCESSING;
+        this.startedAt = LocalDateTime.now();
+    }
+
+    public void updateProgress(int progress) {
+        if (this.status != AiJobStatus.PROCESSING) {
+            throw new IllegalStateException(
+                    "처리 중인 작업만 진행률을 변경할 수 있습니다."
+            );
+        }
+
+        if (progress < 0 || progress >= 100) {
+            throw new IllegalArgumentException(
+                    "진행률은 0 이상 100 미만이어야 합니다."
+            );
+        }
+
+        this.progress = progress;
+    }
+
+    public void complete(String resultJson) {
+        validateTransition(AiJobStatus.COMPLETED);
+
+        this.status = AiJobStatus.COMPLETED;
+        this.progress = 100;
+        this.resultJson = resultJson;
+        this.completedAt = LocalDateTime.now();
+    }
+
+    public void fail(String errorCode, String errorMessage) {
+        validateTransition(AiJobStatus.FAILED);
+
+        this.status = AiJobStatus.FAILED;
+        this.errorCode = errorCode;
+        this.errorMessage = errorMessage;
+        this.completedAt = LocalDateTime.now();
+    }
+
+    public void retry() {
+        validateTransition(AiJobStatus.RETRYING);
+
+        if (this.retryCount >= this.maxRetryCount) {
+            throw new IllegalStateException(
+                    "최대 재시도 횟수를 초과했습니다."
+            );
+        }
+
+        this.status = AiJobStatus.RETRYING;
+        this.retryCount++;
+        this.progress = 0;
+        this.errorCode = null;
+        this.errorMessage = null;
+        this.completedAt = null;
+    }
+
+    public void cancel() {
+        validateTransition(AiJobStatus.CANCELLED);
+
+        this.status = AiJobStatus.CANCELLED;
+        this.completedAt = LocalDateTime.now();
+    }
+
+    private void validateTransition(AiJobStatus targetStatus) {
+        boolean allowed = switch (this.status) {
+            case PENDING ->
+                    targetStatus == AiJobStatus.PROCESSING
+                            || targetStatus == AiJobStatus.CANCELLED;
+            case PROCESSING ->
+                    targetStatus == AiJobStatus.COMPLETED
+                            || targetStatus == AiJobStatus.FAILED
+                            || targetStatus == AiJobStatus.CANCELLED;
+            case FAILED ->
+                    targetStatus == AiJobStatus.RETRYING
+                            || targetStatus == AiJobStatus.CANCELLED;
+            case RETRYING ->
+                    targetStatus == AiJobStatus.PROCESSING
+                            || targetStatus == AiJobStatus.FAILED
+                            || targetStatus == AiJobStatus.CANCELLED;
+            case COMPLETED, CANCELLED -> false;
+        };
+
+        if (!allowed) {
+            throw new IllegalStateException(
+                    "허용되지 않은 AiJob 상태 전이입니다. "
+                            + this.status + " -> " + targetStatus
+            );
+        }
     }
 }
