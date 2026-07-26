@@ -638,6 +638,7 @@ GET /api/v1/system/services
 
 > 구현 상태: `AiJob`, `AiJobStatus`, `AiJobStage`, `AiJobType`, `AiJobRepository` 1차 구현을 완료했다.
 > 현재는 Python 호출 전 단계로, 문서 기준 `PENDING` Job을 생성하고 조회하는 운영 기반만 제공한다.
+> 상태 변경은 외부 `setStatus()` 방식이 아니라 `start`, `updateProgress`, `complete`, `fail`, `retry`, `cancel` Entity 메서드로 제어한다.
 
 ### 10.2 권장 상태
 
@@ -650,6 +651,17 @@ public enum AiJobStatus {
     RETRYING,
     CANCELLED
 }
+```
+
+허용 상태 전이:
+
+```text
+PENDING    → PROCESSING, CANCELLED
+PROCESSING → COMPLETED, FAILED, CANCELLED
+FAILED     → RETRYING, CANCELLED
+RETRYING   → PROCESSING, FAILED, CANCELLED
+COMPLETED  → 전이 불가
+CANCELLED  → 전이 불가
 ```
 
 ### 10.3 처리 단계

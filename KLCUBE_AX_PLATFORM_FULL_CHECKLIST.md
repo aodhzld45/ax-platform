@@ -774,7 +774,7 @@ updatedAt
 - [x] `AiJobRepository`
 - [x] Service
 - [x] Controller
-- [ ] 상태 변경 검증
+- [x] 상태 변경 검증
 
 ## 권장 상태
 
@@ -821,8 +821,8 @@ updatedAt
 ## 완료 기준
 
 - [x] 문서 기준으로 PENDING AI Job을 생성할 수 있다.
-- [ ] Job 상태가 단계별로 변경된다.
-- [ ] 실패 사유와 재시도 횟수가 저장된다.
+- [x] Entity 내부 메서드로 Job 상태 전이를 검증한다.
+- [x] 실패 사유와 재시도 횟수를 Entity에 저장할 수 있다.
 
 ---
 
@@ -1834,6 +1834,8 @@ frontend
 - [x] AiJob 상세 조회 API
 - [x] Document별 AiJob 목록 조회 API
 - [x] AiJob 생성/조회/오류 테스트
+- [x] AiJob Entity 상태 전이 검증 메서드
+- [x] AiJob Entity 상태 전이 단위 테스트
 - [ ] Python 문서 처리 요청 연동
 - [ ] Python 문서 처리 요청 상태 전이 구현
 
