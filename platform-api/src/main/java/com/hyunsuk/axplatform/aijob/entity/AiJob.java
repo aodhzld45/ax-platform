@@ -141,6 +141,8 @@ public class AiJob extends BaseTimeEntity {
         validateTransition(AiJobStatus.PROCESSING);
 
         this.status = AiJobStatus.PROCESSING;
+        this.currentStage = AiJobStage.TEXT_EXTRACTION;
+        this.progress = 10;
         this.startedAt = LocalDateTime.now();
     }
 
@@ -206,6 +208,7 @@ public class AiJob extends BaseTimeEntity {
         boolean allowed = switch (this.status) {
             case PENDING ->
                     targetStatus == AiJobStatus.PROCESSING
+                            || targetStatus == AiJobStatus.FAILED
                             || targetStatus == AiJobStatus.CANCELLED;
             case PROCESSING ->
                     targetStatus == AiJobStatus.COMPLETED

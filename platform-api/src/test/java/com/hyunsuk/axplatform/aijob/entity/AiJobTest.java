@@ -14,6 +14,9 @@ class AiJobTest {
         aiJob.start();
 
         assertThat(aiJob.getStatus()).isEqualTo(AiJobStatus.PROCESSING);
+        assertThat(aiJob.getCurrentStage())
+                .isEqualTo(AiJobStage.TEXT_EXTRACTION);
+        assertThat(aiJob.getProgress()).isEqualTo(10);
         assertThat(aiJob.getStartedAt()).isNotNull();
     }
 
@@ -57,6 +60,17 @@ class AiJobTest {
         assertThat(aiJob.getStatus()).isEqualTo(AiJobStatus.FAILED);
         assertThat(aiJob.getErrorCode()).isEqualTo("PYTHON_API_ERROR");
         assertThat(aiJob.getErrorMessage()).isEqualTo("Python API 호출 실패");
+        assertThat(aiJob.getCompletedAt()).isNotNull();
+    }
+
+    @Test
+    void failAllowsPendingJobWhenPythonRequestFailsBeforeProcessing() {
+        AiJob aiJob = createPendingJob();
+
+        aiJob.fail("AI_API_REQUEST_FAILED", "Python AI API 요청 실패");
+
+        assertThat(aiJob.getStatus()).isEqualTo(AiJobStatus.FAILED);
+        assertThat(aiJob.getErrorCode()).isEqualTo("AI_API_REQUEST_FAILED");
         assertThat(aiJob.getCompletedAt()).isNotNull();
     }
 

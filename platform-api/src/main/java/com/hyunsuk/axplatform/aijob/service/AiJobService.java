@@ -1,5 +1,8 @@
 package com.hyunsuk.axplatform.aijob.service;
 
+import com.hyunsuk.axplatform.aijob.client.AiJobPythonClient;
+import com.hyunsuk.axplatform.aijob.client.dto.AiJobPythonRequest;
+import com.hyunsuk.axplatform.aijob.client.dto.AiJobPythonResponse;
 import com.hyunsuk.axplatform.aijob.dto.AiJobCreateRequest;
 import com.hyunsuk.axplatform.aijob.dto.AiJobListResponse;
 import com.hyunsuk.axplatform.aijob.dto.AiJobResponse;
@@ -15,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClientException;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -30,6 +34,7 @@ public class AiJobService {
 
     private final DocumentRepository documentRepository;
     private final AiJobRepository aiJobRepository;
+    private final AiJobPythonClient aiJobPythonClient;
 
     @Transactional
     public AiJobResponse createPendingJob(
@@ -47,7 +52,10 @@ public class AiJobService {
                 resolveJobType(request)
         );
 
-        return AiJobResponse.from(aiJobRepository.save(aiJob));
+        AiJob savedAiJob = aiJobRepository.save(aiJob);
+        requestPythonProcessing(savedAiJob);
+
+        return AiJobResponse.from(savedAiJob);
     }
 
     @Transactional(readOnly = true)
@@ -91,6 +99,30 @@ public class AiJobService {
         }
 
         return request.getJobType();
+    }
+
+    private void requestPythonProcessing(AiJob aiJob) {
+        try {
+            AiJobPythonResponse response =
+                    aiJobPythonClient.requestProcessing(
+                            AiJobPythonRequest.from(aiJob)
+                    );
+
+            if (response == null || !response.isAccepted()) {
+                aiJob.fail(
+                        "AI_API_REQUEST_REJECTED",
+                        "Python AI API rejected the processing request."
+                );
+                return;
+            }
+
+            aiJob.start();
+        } catch (RestClientException exception) {
+            aiJob.fail(
+                    "AI_API_REQUEST_FAILED",
+                    "Python AI API processing request failed."
+            );
+        }
     }
 
     private String createJobKey() {

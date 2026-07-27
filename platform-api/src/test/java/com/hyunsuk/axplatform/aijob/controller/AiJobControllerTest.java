@@ -2,6 +2,9 @@ package com.hyunsuk.axplatform.aijob.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hyunsuk.axplatform.aijob.client.AiJobPythonClient;
+import com.hyunsuk.axplatform.aijob.client.dto.AiJobPythonRequest;
+import com.hyunsuk.axplatform.aijob.client.dto.AiJobPythonResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,12 +14,16 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.nio.file.Path;
 
 import static org.hamcrest.Matchers.startsWith;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -37,6 +44,9 @@ class AiJobControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @MockitoBean
+    private AiJobPythonClient aiJobPythonClient;
+
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry registry) {
         registry.add(
@@ -48,6 +58,18 @@ class AiJobControllerTest {
     @Test
     void createPendingJobAndFindByJobKeyAndDocument()
             throws Exception {
+        when(aiJobPythonClient.requestProcessing(any()))
+                .thenAnswer(invocation -> {
+                    AiJobPythonRequest request = invocation.getArgument(0);
+
+                    return new AiJobPythonResponse(
+                            request.getJobId(),
+                            true,
+                            "PENDING",
+                            "accepted"
+                    );
+                });
+
         long documentId = uploadKoreanSourceDocument();
 
         MvcResult result = mockMvc.perform(
@@ -74,12 +96,13 @@ class AiJobControllerTest {
                         .value("Korean source document"))
                 .andExpect(jsonPath("$.jobType")
                         .value("KOREAN_TO_GLOSS"))
-                .andExpect(jsonPath("$.status").value("PENDING"))
+                .andExpect(jsonPath("$.status").value("PROCESSING"))
                 .andExpect(jsonPath("$.currentStage")
-                        .value("FILE_PREPARATION"))
-                .andExpect(jsonPath("$.progress").value(0))
+                        .value("TEXT_EXTRACTION"))
+                .andExpect(jsonPath("$.progress").value(10))
                 .andExpect(jsonPath("$.retryCount").value(0))
                 .andExpect(jsonPath("$.requestedAt").exists())
+                .andExpect(jsonPath("$.startedAt").exists())
                 .andReturn();
 
         JsonNode response = objectMapper.readTree(
@@ -91,7 +114,7 @@ class AiJobControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.jobKey").value(jobKey))
                 .andExpect(jsonPath("$.documentId").value(documentId))
-                .andExpect(jsonPath("$.status").value("PENDING"));
+                .andExpect(jsonPath("$.status").value("PROCESSING"));
 
         mockMvc.perform(
                         get(
@@ -105,6 +128,39 @@ class AiJobControllerTest {
                 .andExpect(jsonPath("$.items[0].jobKey").value(jobKey))
                 .andExpect(jsonPath("$.totalCount").exists())
                 .andExpect(jsonPath("$.totalPages").exists());
+    }
+
+    @Test
+    void createJobStoresFailedWhenPythonRequestFails()
+            throws Exception {
+        when(aiJobPythonClient.requestProcessing(any()))
+                .thenThrow(new ResourceAccessException("connection refused"));
+
+        long documentId = uploadKoreanSourceDocument();
+
+        mockMvc.perform(
+                        post(
+                                "/api/v1/documents/{documentId}/ai-jobs",
+                                documentId
+                        )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "jobType": "KOREAN_TO_GLOSS"
+                                        }
+                                        """)
+                )
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.documentId").value(documentId))
+                .andExpect(jsonPath("$.status").value("FAILED"))
+                .andExpect(jsonPath("$.currentStage")
+                        .value("FILE_PREPARATION"))
+                .andExpect(jsonPath("$.progress").value(0))
+                .andExpect(jsonPath("$.errorCode")
+                        .value("AI_API_REQUEST_FAILED"))
+                .andExpect(jsonPath("$.errorMessage")
+                        .value("Python AI API processing request failed."))
+                .andExpect(jsonPath("$.completedAt").exists());
     }
 
     @Test

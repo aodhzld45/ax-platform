@@ -42,6 +42,7 @@ server:
 ai:
   api:
     base-url: http://127.0.0.1:8000
+    ingestion-job-path: /api/v1/ingestion/jobs
 
 management:
   endpoints:
