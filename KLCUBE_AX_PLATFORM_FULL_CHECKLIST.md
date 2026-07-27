@@ -410,7 +410,7 @@ Document 업로드 API 구현
 → DocumentRepository로 Document 저장 연결 완료
 → 업로드 실패 시 DB Rollback 및 파일 정리 정책 적용 완료
 → multipart 업로드 201 Created, /files/** 조회, 비허용 파일 400 검증 완료
-→ 다음: Python 문서 처리 요청 연동 및 AiJob 상태 전이 구현
+→ 다음: Python Callback API 및 AiJob 단계별 상태 전이 구현
 ```
 
 ## 현재 프로토타입 파일 처리 흐름
@@ -850,17 +850,19 @@ POST /api/v1/ingestion/jobs
 }
 ```
 
-- [ ] Java Request DTO
+- [x] Java Request DTO
 - [ ] Python Request Schema
-- [ ] Python Response Schema
-- [ ] Java Response DTO
+- [x] Python Response Schema
+- [x] Java Response DTO
 - [ ] OpenAPI 계약 정리
-- [ ] 필드명 camelCase 정책 확정
+- [x] 필드명 camelCase 정책 확정
 
 ## 10-2. 처리 흐름
 
 - [x] Java에서 AI Job을 `PENDING`으로 생성
-- [ ] Python 인덱싱 API 호출
+- [x] Python 인덱싱 API 호출
+- [x] Python 요청 성공 시 Java AiJob을 `PROCESSING`으로 전이
+- [x] Python 요청 실패 시 Java AiJob을 `FAILED`로 전이
 - [ ] Python에서 `PROCESSING` 처리
 - [ ] 문서 파싱
 - [ ] 청킹
@@ -871,9 +873,9 @@ POST /api/v1/ingestion/jobs
 
 ## 완료 기준
 
-- [ ] 문서 업로드 후 Python 처리가 시작된다.
-- [ ] Java에서 처리 상태를 추적할 수 있다.
-- [ ] 실패 시 오류 정보가 남는다.
+- [x] AiJob 생성 후 Python 처리 요청을 전송한다.
+- [x] Java에서 처리 상태를 추적할 수 있다.
+- [x] Python 요청 실패 시 오류 정보가 남는다.
 
 ---
 
@@ -1836,8 +1838,11 @@ frontend
 - [x] AiJob 생성/조회/오류 테스트
 - [x] AiJob Entity 상태 전이 검증 메서드
 - [x] AiJob Entity 상태 전이 단위 테스트
-- [ ] Python 문서 처리 요청 연동
-- [ ] Python 문서 처리 요청 상태 전이 구현
+- [x] Python 문서 처리 요청 연동
+- [x] Python 요청 성공 시 `PROCESSING` 상태 전이
+- [x] Python 요청 실패 시 `FAILED` 상태 전이
+- [x] Python 요청 연동 테스트
+- [ ] Python Callback 기반 단계별 상태 전이 구현
 
 ### 4순위 — PostgreSQL 및 Flyway
 

@@ -637,7 +637,7 @@ GET /api/v1/system/services
 | `completedAt` | 완료일시 |
 
 > 구현 상태: `AiJob`, `AiJobStatus`, `AiJobStage`, `AiJobType`, `AiJobRepository` 1차 구현을 완료했다.
-> 현재는 Python 호출 전 단계로, 문서 기준 `PENDING` Job을 생성하고 조회하는 운영 기반만 제공한다.
+> 현재는 문서 기준 `PENDING` Job 생성 후 Python AI API에 처리 요청을 전송하고, 요청 성공 시 `PROCESSING`, 요청 실패 시 `FAILED`로 전이한다.
 > 상태 변경은 외부 `setStatus()` 방식이 아니라 `start`, `updateProgress`, `complete`, `fail`, `retry`, `cancel` Entity 메서드로 제어한다.
 
 ### 10.2 권장 상태
@@ -656,7 +656,7 @@ public enum AiJobStatus {
 허용 상태 전이:
 
 ```text
-PENDING    → PROCESSING, CANCELLED
+PENDING    → PROCESSING, FAILED, CANCELLED
 PROCESSING → COMPLETED, FAILED, CANCELLED
 FAILED     → RETRYING, CANCELLED
 RETRYING   → PROCESSING, FAILED, CANCELLED
@@ -699,16 +699,37 @@ GET  /api/v1/ai-jobs/{jobKey}
 GET  /api/v1/documents/{documentId}/ai-jobs
 ```
 
-현재 생성 API는 Python 호출을 수행하지 않고 다음 초기 상태로 Job을 생성한다.
+현재 생성 API는 Job을 `PENDING`으로 저장한 뒤 Python AI API의 처리 요청 엔드포인트를 호출한다.
+
+Python 요청 엔드포인트 설정:
+
+```yaml
+ai:
+  api:
+    base-url: http://127.0.0.1:8000
+    ingestion-job-path: /api/v1/ingestion/jobs
+```
+
+Python 요청 성공 시 Java Job 상태:
 
 ```text
-status       = PENDING
-currentStage = FILE_PREPARATION
-progress     = 0
+status       = PROCESSING
+currentStage = TEXT_EXTRACTION
+progress     = 10
 retryCount   = 0
 ```
 
-다음 단계에서 아래 요청 계약을 사용해 Python AI API 호출과 Callback 기반 상태 전이를 연결한다.
+Python 요청 실패 시 Java Job 상태:
+
+```text
+status       = FAILED
+currentStage = FILE_PREPARATION
+progress     = 0
+retryCount   = 0
+errorCode    = AI_API_REQUEST_FAILED
+```
+
+다음 단계에서 Callback 기반 단계별 상태 전이를 연결한다.
 
 같은 볼륨을 공유하는 로컬 프로토타입:
 
@@ -1077,7 +1098,9 @@ com.hyunsuk.axplatform
 - [x] Java-Python 통합 서비스 상태 API 구현
 - [x] Python Health API 호출
 - [x] Python API DOWN 상태 응답 정책 적용
-- [ ] Java → Python 처리 요청
+- [x] Java → Python 처리 요청
+- [x] Python 요청 성공 시 PROCESSING 전이
+- [x] Python 요청 실패 시 FAILED 전이
 - [ ] Timeout 및 4xx/5xx 예외 변환
 - [ ] Callback API
 - [ ] Job 진행률·현재 단계 조회
