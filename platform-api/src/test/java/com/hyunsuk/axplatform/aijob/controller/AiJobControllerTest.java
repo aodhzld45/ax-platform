@@ -5,6 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hyunsuk.axplatform.aijob.client.AiJobPythonClient;
 import com.hyunsuk.axplatform.aijob.client.dto.AiJobPythonRequest;
 import com.hyunsuk.axplatform.aijob.client.dto.AiJobPythonResponse;
+import com.hyunsuk.axplatform.aijob.entity.AiJobFile;
+import com.hyunsuk.axplatform.aijob.repository.AiJobFileRepository;
+import com.hyunsuk.axplatform.common.file.entity.FileMetadata;
+import com.hyunsuk.axplatform.common.file.repository.FileMetadataRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +24,9 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.client.ResourceAccessException;
 
 import java.nio.file.Path;
+import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -44,6 +50,12 @@ class AiJobControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private AiJobFileRepository aiJobFileRepository;
+
+    @Autowired
+    private FileMetadataRepository fileMetadataRepository;
 
     @MockitoBean
     private AiJobPythonClient aiJobPythonClient;
@@ -214,6 +226,86 @@ class AiJobControllerTest {
                 .andExpect(jsonPath("$.resultJson")
                         .value("{\"glossCount\":3}"))
                 .andExpect(jsonPath("$.completedAt").exists());
+    }
+
+    @Test
+    void callbackStoresResultFilesAndSkipsDuplicateFileRole()
+            throws Exception {
+        String jobKey = createProcessingJob();
+
+        MvcResult callbackResult = mockMvc.perform(
+                        patch("/api/v1/ai-jobs/{jobKey}/callback", jobKey)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "status": "PROCESSING",
+                                          "stage": "GLOSS_GENERATION",
+                                          "progress": 70,
+                                          "files": [
+                                            {
+                                              "role": "GLOSS_SEQUENCE",
+                                              "assetType": "JOB_INTERMEDIATE",
+                                              "originalFileName": "gloss-sequence.json",
+                                              "storedFileName": "gloss-sequence_001.json",
+                                              "extension": "json",
+                                              "contentType": "application/json",
+                                              "fileSize": 128,
+                                              "storageRelativePath": "job/JOB_TEST/intermediate/gloss-sequence_001.json",
+                                              "accessPath": "/files/job/JOB_TEST/intermediate/gloss-sequence_001.json",
+                                              "checksumSha256": "abc123"
+                                            }
+                                          ]
+                                        }
+                                        """)
+                )
+                .andExpect(status().isOk())
+                .andReturn();
+
+        long aiJobId = objectMapper.readTree(
+                callbackResult.getResponse().getContentAsString()
+        ).get("aiJobId").asLong();
+
+        List<AiJobFile> files =
+                aiJobFileRepository.findAllByAiJobIdOrderByIdAsc(aiJobId);
+        assertThat(files).hasSize(1);
+        assertThat(files.get(0).getRole().name())
+                .isEqualTo("GLOSS_SEQUENCE");
+
+        FileMetadata fileMetadata = fileMetadataRepository
+                .findByAccessPath(
+                        "/files/job/JOB_TEST/intermediate/gloss-sequence_001.json"
+                )
+                .orElseThrow();
+        assertThat(fileMetadata.getAssetType().name())
+                .isEqualTo("JOB_INTERMEDIATE");
+        assertThat(fileMetadata.getStorageRelativePath())
+                .isEqualTo(
+                        "job/JOB_TEST/intermediate/gloss-sequence_001.json"
+                );
+
+        mockMvc.perform(
+                        patch("/api/v1/ai-jobs/{jobKey}/callback", jobKey)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "status": "PROCESSING",
+                                          "stage": "GLOSS_GENERATION",
+                                          "progress": 70,
+                                          "files": [
+                                            {
+                                              "role": "GLOSS_SEQUENCE",
+                                              "assetType": "JOB_INTERMEDIATE",
+                                              "storageRelativePath": "job/JOB_TEST/intermediate/gloss-sequence_001.json",
+                                              "accessPath": "/files/job/JOB_TEST/intermediate/gloss-sequence_001.json"
+                                            }
+                                          ]
+                                        }
+                                        """)
+                )
+                .andExpect(status().isOk());
+
+        assertThat(aiJobFileRepository.findAllByAiJobIdOrderByIdAsc(aiJobId))
+                .hasSize(1);
     }
 
     @Test

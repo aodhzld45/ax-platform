@@ -3,15 +3,22 @@ package com.hyunsuk.axplatform.aijob.service;
 import com.hyunsuk.axplatform.aijob.client.AiJobPythonClient;
 import com.hyunsuk.axplatform.aijob.client.dto.AiJobPythonRequest;
 import com.hyunsuk.axplatform.aijob.client.dto.AiJobPythonResponse;
+import com.hyunsuk.axplatform.aijob.dto.AiJobCallbackFileRequest;
 import com.hyunsuk.axplatform.aijob.dto.AiJobCallbackRequest;
 import com.hyunsuk.axplatform.aijob.dto.AiJobCreateRequest;
 import com.hyunsuk.axplatform.aijob.dto.AiJobListResponse;
 import com.hyunsuk.axplatform.aijob.dto.AiJobResponse;
 import com.hyunsuk.axplatform.aijob.entity.AiJob;
+import com.hyunsuk.axplatform.aijob.entity.AiJobFile;
+import com.hyunsuk.axplatform.aijob.entity.AiJobFileRole;
 import com.hyunsuk.axplatform.aijob.entity.AiJobStatus;
 import com.hyunsuk.axplatform.aijob.entity.AiJobType;
 import com.hyunsuk.axplatform.aijob.exception.AiJobNotFoundException;
+import com.hyunsuk.axplatform.aijob.repository.AiJobFileRepository;
 import com.hyunsuk.axplatform.aijob.repository.AiJobRepository;
+import com.hyunsuk.axplatform.common.file.entity.FileMetadata;
+import com.hyunsuk.axplatform.common.file.repository.FileMetadataRepository;
+import com.hyunsuk.axplatform.common.file.type.FileAssetType;
 import com.hyunsuk.axplatform.document.entity.Document;
 import com.hyunsuk.axplatform.document.exception.DocumentNotFoundException;
 import com.hyunsuk.axplatform.document.repository.DocumentRepository;
@@ -36,6 +43,8 @@ public class AiJobService {
 
     private final DocumentRepository documentRepository;
     private final AiJobRepository aiJobRepository;
+    private final AiJobFileRepository aiJobFileRepository;
+    private final FileMetadataRepository fileMetadataRepository;
     private final AiJobPythonClient aiJobPythonClient;
 
     @Transactional
@@ -128,6 +137,8 @@ public class AiJobService {
             );
         }
 
+        saveCallbackFiles(aiJob, request);
+
         return AiJobResponse.from(aiJob);
     }
 
@@ -188,6 +199,97 @@ public class AiJobService {
                     "PROCESSING Callback 진행률은 필수입니다."
             );
         }
+    }
+
+    private void saveCallbackFiles(
+            AiJob aiJob,
+            AiJobCallbackRequest request
+    ) {
+        if (request.getFiles() == null || request.getFiles().isEmpty()) {
+            return;
+        }
+
+        for (AiJobCallbackFileRequest fileRequest : request.getFiles()) {
+            validateCallbackFileRequest(fileRequest);
+
+            if (aiJobFileRepository.existsByAiJobIdAndStageAndRole(
+                    aiJob.getId(),
+                    request.getStage(),
+                    fileRequest.getRole()
+            )) {
+                continue;
+            }
+
+            FileAssetType assetType = resolveFileAssetType(fileRequest);
+            FileMetadata fileMetadata = fileMetadataRepository.save(
+                    FileMetadata.createJobFile(
+                            assetType,
+                            fileRequest.getOriginalFileName(),
+                            fileRequest.getStoredFileName(),
+                            fileRequest.getExtension(),
+                            fileRequest.getContentType(),
+                            fileRequest.getFileSize(),
+                            fileRequest.getStorageRelativePath(),
+                            fileRequest.getAccessPath(),
+                            fileRequest.getChecksumSha256()
+                    )
+            );
+
+            aiJobFileRepository.save(
+                    AiJobFile.create(
+                            aiJob,
+                            request.getStage(),
+                            fileRequest.getRole(),
+                            fileMetadata
+                    )
+            );
+        }
+    }
+
+    private void validateCallbackFileRequest(
+            AiJobCallbackFileRequest fileRequest
+    ) {
+        if (fileRequest == null) {
+            throw new IllegalArgumentException(
+                    "AiJob Callback 파일 정보는 필수입니다."
+            );
+        }
+
+        if (fileRequest.getRole() == null) {
+            throw new IllegalArgumentException(
+                    "AiJob Callback 파일 역할은 필수입니다."
+            );
+        }
+
+        if (!hasText(fileRequest.getStorageRelativePath())) {
+            throw new IllegalArgumentException(
+                    "AiJob Callback 파일 상대 저장 경로는 필수입니다."
+            );
+        }
+
+        if (!hasText(fileRequest.getAccessPath())) {
+            throw new IllegalArgumentException(
+                    "AiJob Callback 파일 접근 경로는 필수입니다."
+            );
+        }
+    }
+
+    private FileAssetType resolveFileAssetType(
+            AiJobCallbackFileRequest fileRequest
+    ) {
+        if (fileRequest.getAssetType() != null) {
+            return fileRequest.getAssetType();
+        }
+
+        if (fileRequest.getRole() == AiJobFileRole.SIGN_VIDEO) {
+            return FileAssetType.JOB_OUTPUT;
+        }
+
+        return FileAssetType.JOB_INTERMEDIATE;
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 
     private String createJobKey() {

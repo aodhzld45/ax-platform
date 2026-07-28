@@ -113,11 +113,76 @@ public class FileMetadata extends BaseTimeEntity {
                 .build();
     }
 
+    public static FileMetadata createJobFile(
+            FileAssetType assetType,
+            String originalFileName,
+            String storedFileName,
+            String extension,
+            String contentType,
+            long fileSize,
+            String storageRelativePath,
+            String accessPath,
+            String checksumSha256
+    ) {
+        String resolvedStoredFileName = hasText(storedFileName)
+                ? storedFileName
+                : extractFileName(storageRelativePath);
+        String resolvedOriginalFileName = hasText(originalFileName)
+                ? originalFileName
+                : resolvedStoredFileName;
+        String resolvedExtension = hasText(extension)
+                ? extension.toLowerCase()
+                : extractExtension(resolvedStoredFileName);
+
+        return FileMetadata.builder()
+                .assetType(assetType)
+                .status(FileMetadataStatus.ACTIVE)
+                .originalFileName(resolvedOriginalFileName)
+                .storedFileName(resolvedStoredFileName)
+                .extension(resolvedExtension)
+                .contentType(contentType)
+                .fileSize(fileSize)
+                .storageRelativePath(storageRelativePath)
+                .accessPath(accessPath)
+                .checksumSha256(checksumSha256)
+                .build();
+    }
+
     public void markDeleted() {
         this.status = FileMetadataStatus.DELETED;
     }
 
     public void markFailed() {
         this.status = FileMetadataStatus.FAILED;
+    }
+
+    private static String extractFileName(String path) {
+        if (!hasText(path)) {
+            return "unknown";
+        }
+
+        int index = path.lastIndexOf('/');
+        if (index < 0 || index == path.length() - 1) {
+            return path;
+        }
+
+        return path.substring(index + 1);
+    }
+
+    private static String extractExtension(String fileName) {
+        if (!hasText(fileName)) {
+            return "";
+        }
+
+        int index = fileName.lastIndexOf('.');
+        if (index < 0 || index == fileName.length() - 1) {
+            return "";
+        }
+
+        return fileName.substring(index + 1).toLowerCase();
+    }
+
+    private static boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 }

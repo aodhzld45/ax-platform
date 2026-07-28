@@ -5,6 +5,8 @@ import com.hyunsuk.axplatform.aijob.entity.AiJobStatus;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Getter
 @NoArgsConstructor
 public class AiJobCallbackRequest {
@@ -16,4 +18,5 @@ public class AiJobCallbackRequest {
     private String errorCode;
     private String errorMessage;
     private String resultJson;
+    private List<AiJobCallbackFileRequest> files;
 }
