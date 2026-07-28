@@ -162,19 +162,55 @@ public class AiJob extends BaseTimeEntity {
         this.progress = progress;
     }
 
+    public void updateStage(AiJobStage stage, int progress) {
+        if (this.status != AiJobStatus.PROCESSING) {
+            throw new IllegalStateException(
+                    "처리 중인 작업만 단계를 변경할 수 있습니다."
+            );
+        }
+
+        validateStageForward(stage);
+
+        if (progress < this.progress) {
+            throw new IllegalStateException(
+                    "AiJob 진행률은 이전 값보다 낮아질 수 없습니다. "
+                            + this.progress + " -> " + progress
+            );
+        }
+
+        updateProgress(progress);
+        this.currentStage = stage;
+    }
+
     public void complete(String resultJson) {
+        complete(AiJobStage.RESULT_FINALIZATION, resultJson);
+    }
+
+    public void complete(AiJobStage stage, String resultJson) {
         validateTransition(AiJobStatus.COMPLETED);
+        validateStageForward(stage);
 
         this.status = AiJobStatus.COMPLETED;
+        this.currentStage = stage;
         this.progress = 100;
         this.resultJson = resultJson;
         this.completedAt = LocalDateTime.now();
     }
 
     public void fail(String errorCode, String errorMessage) {
+        fail(this.currentStage, errorCode, errorMessage);
+    }
+
+    public void fail(
+            AiJobStage stage,
+            String errorCode,
+            String errorMessage
+    ) {
         validateTransition(AiJobStatus.FAILED);
+        validateStageForward(stage);
 
         this.status = AiJobStatus.FAILED;
+        this.currentStage = stage;
         this.errorCode = errorCode;
         this.errorMessage = errorMessage;
         this.completedAt = LocalDateTime.now();
@@ -228,6 +264,19 @@ public class AiJob extends BaseTimeEntity {
             throw new IllegalStateException(
                     "허용되지 않은 AiJob 상태 전이입니다. "
                             + this.status + " -> " + targetStatus
+            );
+        }
+    }
+
+    private void validateStageForward(AiJobStage targetStage) {
+        if (targetStage == null) {
+            throw new IllegalArgumentException("AiJob 단계는 필수입니다.");
+        }
+
+        if (targetStage.ordinal() < this.currentStage.ordinal()) {
+            throw new IllegalStateException(
+                    "AiJob 단계는 이전 단계로 되돌릴 수 없습니다. "
+                            + this.currentStage + " -> " + targetStage
             );
         }
     }

@@ -1,6 +1,7 @@
 package com.hyunsuk.axplatform.aijob.controller;
 
 import com.hyunsuk.axplatform.aijob.dto.AiJobCreateRequest;
+import com.hyunsuk.axplatform.aijob.dto.AiJobCallbackRequest;
 import com.hyunsuk.axplatform.aijob.dto.AiJobListResponse;
 import com.hyunsuk.axplatform.aijob.dto.AiJobResponse;
 import com.hyunsuk.axplatform.aijob.service.AiJobService;
@@ -9,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,6 +45,16 @@ public class AiJobController {
             @PathVariable String jobKey
     ) {
         return ResponseEntity.ok(aiJobService.findByJobKey(jobKey));
+    }
+
+    @PatchMapping("/ai-jobs/{jobKey}/callback")
+    public ResponseEntity<AiJobResponse> handleCallback(
+            @PathVariable String jobKey,
+            @RequestBody AiJobCallbackRequest request
+    ) {
+        return ResponseEntity.ok(
+                aiJobService.handleCallback(jobKey, request)
+        );
     }
 
     @GetMapping("/documents/{documentId}/ai-jobs")

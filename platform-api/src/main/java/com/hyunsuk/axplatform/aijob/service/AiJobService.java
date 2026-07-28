@@ -3,10 +3,12 @@ package com.hyunsuk.axplatform.aijob.service;
 import com.hyunsuk.axplatform.aijob.client.AiJobPythonClient;
 import com.hyunsuk.axplatform.aijob.client.dto.AiJobPythonRequest;
 import com.hyunsuk.axplatform.aijob.client.dto.AiJobPythonResponse;
+import com.hyunsuk.axplatform.aijob.dto.AiJobCallbackRequest;
 import com.hyunsuk.axplatform.aijob.dto.AiJobCreateRequest;
 import com.hyunsuk.axplatform.aijob.dto.AiJobListResponse;
 import com.hyunsuk.axplatform.aijob.dto.AiJobResponse;
 import com.hyunsuk.axplatform.aijob.entity.AiJob;
+import com.hyunsuk.axplatform.aijob.entity.AiJobStatus;
 import com.hyunsuk.axplatform.aijob.entity.AiJobType;
 import com.hyunsuk.axplatform.aijob.exception.AiJobNotFoundException;
 import com.hyunsuk.axplatform.aijob.repository.AiJobRepository;
@@ -93,6 +95,42 @@ public class AiJobService {
         );
     }
 
+    @Transactional
+    public AiJobResponse handleCallback(
+            String jobKey,
+            AiJobCallbackRequest request
+    ) {
+        AiJob aiJob = aiJobRepository.findByJobKey(jobKey)
+                .orElseThrow(() -> new AiJobNotFoundException(jobKey));
+
+        validateCallbackRequest(request);
+
+        if (request.getStatus() == AiJobStatus.PROCESSING) {
+            aiJob.updateStage(
+                    request.getStage(),
+                    request.getProgress()
+            );
+        } else if (request.getStatus() == AiJobStatus.COMPLETED) {
+            aiJob.complete(
+                    request.getStage(),
+                    request.getResultJson()
+            );
+        } else if (request.getStatus() == AiJobStatus.FAILED) {
+            aiJob.fail(
+                    request.getStage(),
+                    request.getErrorCode(),
+                    request.getErrorMessage()
+            );
+        } else {
+            throw new IllegalArgumentException(
+                    "지원하지 않는 AiJob Callback 상태입니다. "
+                            + request.getStatus()
+            );
+        }
+
+        return AiJobResponse.from(aiJob);
+    }
+
     private AiJobType resolveJobType(AiJobCreateRequest request) {
         if (request == null || request.getJobType() == null) {
             return AiJobType.KOREAN_TO_GLOSS;
@@ -121,6 +159,33 @@ public class AiJobService {
             aiJob.fail(
                     "AI_API_REQUEST_FAILED",
                     "Python AI API processing request failed."
+            );
+        }
+    }
+
+    private void validateCallbackRequest(AiJobCallbackRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException(
+                    "AiJob Callback 요청은 필수입니다."
+            );
+        }
+
+        if (request.getStatus() == null) {
+            throw new IllegalArgumentException(
+                    "AiJob Callback 상태는 필수입니다."
+            );
+        }
+
+        if (request.getStage() == null) {
+            throw new IllegalArgumentException(
+                    "AiJob Callback 단계는 필수입니다."
+            );
+        }
+
+        if (request.getStatus() == AiJobStatus.PROCESSING
+                && request.getProgress() == null) {
+            throw new IllegalArgumentException(
+                    "PROCESSING Callback 진행률은 필수입니다."
             );
         }
     }

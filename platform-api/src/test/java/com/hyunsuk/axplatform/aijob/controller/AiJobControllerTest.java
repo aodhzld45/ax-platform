@@ -26,6 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -164,6 +165,212 @@ class AiJobControllerTest {
     }
 
     @Test
+    void handleProcessingCallbackUpdatesStageAndProgress()
+            throws Exception {
+        String jobKey = createProcessingJob();
+
+        mockMvc.perform(
+                        patch("/api/v1/ai-jobs/{jobKey}/callback", jobKey)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "status": "PROCESSING",
+                                          "stage": "KOREAN_NORMALIZATION",
+                                          "progress": 40,
+                                          "message": "국문 정규화 완료"
+                                        }
+                                        """)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.jobKey").value(jobKey))
+                .andExpect(jsonPath("$.status").value("PROCESSING"))
+                .andExpect(jsonPath("$.currentStage")
+                        .value("KOREAN_NORMALIZATION"))
+                .andExpect(jsonPath("$.progress").value(40));
+    }
+
+    @Test
+    void handleCompletedCallbackCompletesJob()
+            throws Exception {
+        String jobKey = createProcessingJob();
+
+        mockMvc.perform(
+                        patch("/api/v1/ai-jobs/{jobKey}/callback", jobKey)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "status": "COMPLETED",
+                                          "stage": "RESULT_FINALIZATION",
+                                          "progress": 100,
+                                          "resultJson": "{\\"glossCount\\":3}"
+                                        }
+                                        """)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.currentStage")
+                        .value("RESULT_FINALIZATION"))
+                .andExpect(jsonPath("$.progress").value(100))
+                .andExpect(jsonPath("$.resultJson")
+                        .value("{\"glossCount\":3}"))
+                .andExpect(jsonPath("$.completedAt").exists());
+    }
+
+    @Test
+    void handleFailedCallbackStoresError()
+            throws Exception {
+        String jobKey = createProcessingJob();
+
+        mockMvc.perform(
+                        patch("/api/v1/ai-jobs/{jobKey}/callback", jobKey)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "status": "FAILED",
+                                          "stage": "TEXT_EXTRACTION",
+                                          "progress": 20,
+                                          "errorCode": "TEXT_EXTRACTION_FAILED",
+                                          "errorMessage": "PDF 텍스트 추출 실패"
+                                        }
+                                        """)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("FAILED"))
+                .andExpect(jsonPath("$.currentStage")
+                        .value("TEXT_EXTRACTION"))
+                .andExpect(jsonPath("$.errorCode")
+                        .value("TEXT_EXTRACTION_FAILED"))
+                .andExpect(jsonPath("$.errorMessage")
+                        .value("PDF 텍스트 추출 실패"))
+                .andExpect(jsonPath("$.completedAt").exists());
+    }
+
+    @Test
+    void callbackWithMissingJobReturnsNotFound()
+            throws Exception {
+        mockMvc.perform(
+                        patch(
+                                "/api/v1/ai-jobs/{jobKey}/callback",
+                                "JOB_UNKNOWN"
+                        )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "status": "PROCESSING",
+                                          "stage": "TEXT_EXTRACTION",
+                                          "progress": 20
+                                        }
+                                        """)
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode")
+                        .value("AI_JOB_NOT_FOUND"));
+    }
+
+    @Test
+    void callbackRejectsBackwardStage()
+            throws Exception {
+        String jobKey = createProcessingJob();
+
+        mockMvc.perform(
+                        patch("/api/v1/ai-jobs/{jobKey}/callback", jobKey)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "status": "PROCESSING",
+                                          "stage": "KOREAN_NORMALIZATION",
+                                          "progress": 40
+                                        }
+                                        """)
+                )
+                .andExpect(status().isOk());
+
+        mockMvc.perform(
+                        patch("/api/v1/ai-jobs/{jobKey}/callback", jobKey)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "status": "PROCESSING",
+                                          "stage": "TEXT_EXTRACTION",
+                                          "progress": 50
+                                        }
+                                        """)
+                )
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.errorCode")
+                        .value("AI_JOB_STATE_CONFLICT"));
+    }
+
+    @Test
+    void callbackRejectsLowerProgress()
+            throws Exception {
+        String jobKey = createProcessingJob();
+
+        mockMvc.perform(
+                        patch("/api/v1/ai-jobs/{jobKey}/callback", jobKey)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "status": "PROCESSING",
+                                          "stage": "KOREAN_NORMALIZATION",
+                                          "progress": 40
+                                        }
+                                        """)
+                )
+                .andExpect(status().isOk());
+
+        mockMvc.perform(
+                        patch("/api/v1/ai-jobs/{jobKey}/callback", jobKey)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "status": "PROCESSING",
+                                          "stage": "GLOSS_GENERATION",
+                                          "progress": 30
+                                        }
+                                        """)
+                )
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.errorCode")
+                        .value("AI_JOB_STATE_CONFLICT"));
+    }
+
+    @Test
+    void completedJobRejectsProcessingCallback()
+            throws Exception {
+        String jobKey = createProcessingJob();
+
+        mockMvc.perform(
+                        patch("/api/v1/ai-jobs/{jobKey}/callback", jobKey)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "status": "COMPLETED",
+                                          "stage": "RESULT_FINALIZATION",
+                                          "progress": 100,
+                                          "resultJson": "{}"
+                                        }
+                                        """)
+                )
+                .andExpect(status().isOk());
+
+        mockMvc.perform(
+                        patch("/api/v1/ai-jobs/{jobKey}/callback", jobKey)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "status": "PROCESSING",
+                                          "stage": "RESULT_FINALIZATION",
+                                          "progress": 90
+                                        }
+                                        """)
+                )
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.errorCode")
+                        .value("AI_JOB_STATE_CONFLICT"));
+    }
+
+    @Test
     void createPendingJobWithMissingDocumentReturnsNotFound()
             throws Exception {
         mockMvc.perform(post("/api/v1/documents/{documentId}/ai-jobs", 999_999L))
@@ -201,5 +408,42 @@ class AiJobControllerTest {
         );
 
         return response.get("documentId").asLong();
+    }
+
+    private String createProcessingJob() throws Exception {
+        when(aiJobPythonClient.requestProcessing(any()))
+                .thenAnswer(invocation -> {
+                    AiJobPythonRequest request = invocation.getArgument(0);
+
+                    return new AiJobPythonResponse(
+                            request.getJobId(),
+                            true,
+                            "PENDING",
+                            "accepted"
+                    );
+                });
+
+        long documentId = uploadKoreanSourceDocument();
+
+        MvcResult result = mockMvc.perform(
+                        post(
+                                "/api/v1/documents/{documentId}/ai-jobs",
+                                documentId
+                        )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "jobType": "KOREAN_TO_GLOSS"
+                                        }
+                                        """)
+                )
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        JsonNode response = objectMapper.readTree(
+                result.getResponse().getContentAsString()
+        );
+
+        return response.get("jobKey").asText();
     }
 }
