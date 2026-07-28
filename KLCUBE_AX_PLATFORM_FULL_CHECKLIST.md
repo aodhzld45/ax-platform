@@ -410,7 +410,7 @@ Document 업로드 API 구현
 → DocumentRepository로 Document 저장 연결 완료
 → 업로드 실패 시 DB Rollback 및 파일 정리 정책 적용 완료
 → multipart 업로드 201 Created, /files/** 조회, 비허용 파일 400 검증 완료
-→ 다음: Python Callback API 및 AiJob 단계별 상태 전이 구현
+→ 다음: AiJob 산출물 목록 조회 API 및 파일 다운로드 정책 설계
 ```
 
 ## 현재 프로토타입 파일 처리 흐름
@@ -1717,7 +1717,7 @@ frontend
 - [ ] `motion-sequence.json`
 - [ ] `avatar-timeline.json`
 - [ ] `sign-video.mp4`
-- [ ] 생성 결과 메타데이터 저장
+- [x] Callback 산출물 파일 메타데이터 저장 기반
 - [ ] 프론트엔드에서 영상 재생
 
 ---
@@ -1842,7 +1842,14 @@ frontend
 - [x] Python 요청 성공 시 `PROCESSING` 상태 전이
 - [x] Python 요청 실패 시 `FAILED` 상태 전이
 - [x] Python 요청 연동 테스트
-- [ ] Python Callback 기반 단계별 상태 전이 구현
+- [x] Python Callback 기반 단계별 상태 전이 구현
+- [x] Callback Request `files` 필드 추가
+- [x] `AiJobFile` Entity 및 Repository 구현
+- [x] `AiJobFileRole` Enum 구현
+- [x] Callback 산출물 `FileMetadata` 저장 연결
+- [x] `jobKey + stage + role` 기준 중복 산출물 저장 방지
+- [x] Callback 산출물 저장 테스트 추가
+- [ ] AiJob 산출물 목록 조회 API 구현
 
 ### 4순위 — PostgreSQL 및 Flyway
 

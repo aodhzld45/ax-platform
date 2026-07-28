@@ -779,13 +779,28 @@ errorCode    = AI_API_REQUEST_FAILED
   "message": "국문 정규화가 완료되었습니다.",
   "files": [
     {
-      "stage": "INTERMEDIATE",
       "role": "NORMALIZED_KOREAN",
-      "storagePath": "job/JOB_20260724_0001/intermediate/normalized-korean_UUID.json"
+      "assetType": "JOB_INTERMEDIATE",
+      "originalFileName": "normalized-korean.json",
+      "storedFileName": "normalized-korean_UUID.json",
+      "extension": "json",
+      "contentType": "application/json",
+      "fileSize": 1024,
+      "storageRelativePath": "job/JOB_20260724_0001/intermediate/normalized-korean_UUID.json",
+      "accessPath": "/files/job/JOB_20260724_0001/intermediate/normalized-korean_UUID.json",
+      "checksumSha256": "..."
     }
   ]
 }
 ```
+
+Callback `files` 처리 정책:
+
+- `files` 항목은 `FileMetadata`로 저장한다.
+- `AiJobFile`은 `AiJob 1 : N AiJobFile`, `AiJobFile 1 : 1 FileMetadata` 구조로 산출물 파일을 연결한다.
+- 중복 Callback 방지를 위해 `aiJob + stage + role` 조합은 한 번만 저장한다.
+- 동일 조합이 재전송되면 기존 산출물 기록을 유지하고 추가 저장하지 않는다.
+- `role=SIGN_VIDEO`는 기본적으로 `JOB_OUTPUT`, 그 외 산출물은 기본적으로 `JOB_INTERMEDIATE`로 분류한다.
 
 Callback 완료 예시:
 
@@ -1101,9 +1116,12 @@ com.hyunsuk.axplatform
 - [x] Java → Python 처리 요청
 - [x] Python 요청 성공 시 PROCESSING 전이
 - [x] Python 요청 실패 시 FAILED 전이
+- [x] Callback API
+- [x] Callback files 기반 AiJob 산출물 저장
+- [x] AiJobFile Entity 및 Repository
+- [x] job + stage + role 기준 중복 Callback 파일 저장 방지
 - [ ] Timeout 및 4xx/5xx 예외 변환
-- [ ] Callback API
-- [ ] Job 진행률·현재 단계 조회
+- [ ] AiJob 산출물 목록 조회 API
 - [ ] 실패 재시도
 
 ### Phase 4. 운영 안정화
