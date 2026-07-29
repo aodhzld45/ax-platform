@@ -6,6 +6,8 @@ import com.hyunsuk.axplatform.aijob.client.dto.AiJobPythonResponse;
 import com.hyunsuk.axplatform.aijob.dto.AiJobCallbackFileRequest;
 import com.hyunsuk.axplatform.aijob.dto.AiJobCallbackRequest;
 import com.hyunsuk.axplatform.aijob.dto.AiJobCreateRequest;
+import com.hyunsuk.axplatform.aijob.dto.AiJobFileListResponse;
+import com.hyunsuk.axplatform.aijob.dto.AiJobFileResponse;
 import com.hyunsuk.axplatform.aijob.dto.AiJobListResponse;
 import com.hyunsuk.axplatform.aijob.dto.AiJobResponse;
 import com.hyunsuk.axplatform.aijob.entity.AiJob;
@@ -102,6 +104,20 @@ public class AiJobService {
                 page.getTotalElements(),
                 page.getTotalPages()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public AiJobFileListResponse findFilesByJobKey(String jobKey) {
+        AiJob aiJob = aiJobRepository.findByJobKey(jobKey)
+                .orElseThrow(() -> new AiJobNotFoundException(jobKey));
+
+        List<AiJobFileResponse> items = aiJobFileRepository
+                .findAllByAiJobIdOrderByIdAsc(aiJob.getId())
+                .stream()
+                .map(AiJobFileResponse::from)
+                .toList();
+
+        return AiJobFileListResponse.of(items);
     }
 
     @Transactional

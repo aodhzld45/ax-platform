@@ -2,6 +2,7 @@ package com.hyunsuk.axplatform.aijob.controller;
 
 import com.hyunsuk.axplatform.aijob.dto.AiJobCreateRequest;
 import com.hyunsuk.axplatform.aijob.dto.AiJobCallbackRequest;
+import com.hyunsuk.axplatform.aijob.dto.AiJobFileListResponse;
 import com.hyunsuk.axplatform.aijob.dto.AiJobListResponse;
 import com.hyunsuk.axplatform.aijob.dto.AiJobResponse;
 import com.hyunsuk.axplatform.aijob.service.AiJobService;
@@ -45,6 +46,15 @@ public class AiJobController {
             @PathVariable String jobKey
     ) {
         return ResponseEntity.ok(aiJobService.findByJobKey(jobKey));
+    }
+
+    @GetMapping("/ai-jobs/{jobKey}/files")
+    public ResponseEntity<AiJobFileListResponse> findFilesByJobKey(
+            @PathVariable String jobKey
+    ) {
+        return ResponseEntity.ok(
+                aiJobService.findFilesByJobKey(jobKey)
+        );
     }
 
     @PatchMapping("/ai-jobs/{jobKey}/callback")

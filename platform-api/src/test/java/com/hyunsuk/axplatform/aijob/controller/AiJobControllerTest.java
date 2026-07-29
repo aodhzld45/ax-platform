@@ -306,6 +306,53 @@ class AiJobControllerTest {
 
         assertThat(aiJobFileRepository.findAllByAiJobIdOrderByIdAsc(aiJobId))
                 .hasSize(1);
+
+        mockMvc.perform(get("/api/v1/ai-jobs/{jobKey}/files", jobKey))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].jobKey").value(jobKey))
+                .andExpect(jsonPath("$.items[0].stage")
+                        .value("GLOSS_GENERATION"))
+                .andExpect(jsonPath("$.items[0].role")
+                        .value("GLOSS_SEQUENCE"))
+                .andExpect(jsonPath("$.items[0].assetType")
+                        .value("JOB_INTERMEDIATE"))
+                .andExpect(jsonPath("$.items[0].originalFileName")
+                        .value("gloss-sequence.json"))
+                .andExpect(jsonPath("$.items[0].storedFileName")
+                        .value("gloss-sequence_001.json"))
+                .andExpect(jsonPath("$.items[0].extension")
+                        .value("json"))
+                .andExpect(jsonPath("$.items[0].contentType")
+                        .value("application/json"))
+                .andExpect(jsonPath("$.items[0].fileSize")
+                        .value(128))
+                .andExpect(jsonPath("$.items[0].storageRelativePath")
+                        .value("job/JOB_TEST/intermediate/gloss-sequence_001.json"))
+                .andExpect(jsonPath("$.items[0].accessPath")
+                        .value("/files/job/JOB_TEST/intermediate/gloss-sequence_001.json"))
+                .andExpect(jsonPath("$.items[0].createdAt").exists())
+                .andExpect(jsonPath("$.totalCount").value(1));
+    }
+
+    @Test
+    void findFilesByJobKeyReturnsEmptyListWhenNoFiles()
+            throws Exception {
+        String jobKey = createProcessingJob();
+
+        mockMvc.perform(get("/api/v1/ai-jobs/{jobKey}/files", jobKey))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items").isArray())
+                .andExpect(jsonPath("$.items").isEmpty())
+                .andExpect(jsonPath("$.totalCount").value(0));
+    }
+
+    @Test
+    void findFilesByMissingJobKeyReturnsNotFound()
+            throws Exception {
+        mockMvc.perform(get("/api/v1/ai-jobs/{jobKey}/files", "JOB_UNKNOWN"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode")
+                        .value("AI_JOB_NOT_FOUND"));
     }
 
     @Test
