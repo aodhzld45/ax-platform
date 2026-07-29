@@ -410,7 +410,7 @@ Document 업로드 API 구현
 → DocumentRepository로 Document 저장 연결 완료
 → 업로드 실패 시 DB Rollback 및 파일 정리 정책 적용 완료
 → multipart 업로드 201 Created, /files/** 조회, 비허용 파일 400 검증 완료
-→ 다음: AiJob 산출물 목록 조회 API 및 파일 다운로드 정책 설계
+→ 다음: 공통 File 다운로드 API 구현
 ```
 
 ## 현재 프로토타입 파일 처리 흐름
@@ -1849,7 +1849,11 @@ frontend
 - [x] Callback 산출물 `FileMetadata` 저장 연결
 - [x] `jobKey + stage + role` 기준 중복 산출물 저장 방지
 - [x] Callback 산출물 저장 테스트 추가
-- [ ] AiJob 산출물 목록 조회 API 구현
+- [x] AiJob 산출물 목록 조회 API 구현
+- [x] `GET /api/v1/ai-jobs/{jobKey}/files` 구현
+- [x] AiJob 산출물 목록 조회 응답 DTO 구현
+- [x] AiJob 산출물 목록 조회 테스트 추가
+- [x] 파일 다운로드 정책 문서화
 
 ### 4순위 — PostgreSQL 및 Flyway
 

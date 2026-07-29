@@ -578,6 +578,72 @@ Content-Disposition: attachment; filename*=UTF-8''민원안내.pdf
 
 대용량 MP4 또는 GLB는 전체 메모리 적재보다 `Resource`, `InputStreamResource`, Range Request 또는 Nginx 내부 전달 방식을 검토한다.
 
+### 9.4 공통 파일 다운로드 API 정책
+
+프로토타입에서는 `/files/**` 정적 리소스 접근을 유지하되, 운영 확장을 위해 공통 다운로드 API를 별도로 둔다.
+
+```http
+GET /api/v1/files/{fileMetadataId}/download
+```
+
+처리 순서:
+
+```text
+1. FileMetadata 조회
+2. FileMetadata.status == ACTIVE 확인
+3. storageRelativePath를 uploadRoot 기준 실제 파일 경로로 변환
+4. Path Traversal 방지를 위해 변환된 경로가 uploadRoot 하위인지 검증
+5. 실제 물리 파일 존재 여부 확인
+6. Content-Type과 Content-Disposition 헤더 설정
+7. Resource 또는 InputStreamResource로 파일 반환
+```
+
+예외 정책:
+
+```text
+FILE_NOT_FOUND           → 404, 파일 메타데이터 없음
+FILE_NOT_AVAILABLE       → 409, 파일 상태가 ACTIVE가 아님
+PHYSICAL_FILE_NOT_FOUND  → 404, DB에는 있으나 물리 파일 없음
+INVALID_FILE_PATH        → 400, uploadRoot 밖의 경로 접근 시도
+```
+
+### 9.5 AiJob 산출물 다운로드 API 정책
+
+AiJob 산출물은 공통 다운로드 API로도 접근할 수 있지만, 운영 권한 검증을 고려하면 Job 전용 다운로드 API를 추가하는 것이 좋다.
+
+```http
+GET /api/v1/ai-jobs/{jobKey}/files/{aiJobFileId}/download
+```
+
+처리 순서:
+
+```text
+1. AiJob 조회
+2. AiJobFile 조회
+3. aiJobFile.aiJob.jobKey == 요청 jobKey 검증
+4. 연결된 FileMetadata 상태 확인
+5. 공통 다운로드 정책과 동일하게 물리 파일 반환
+```
+
+예외 정책:
+
+```text
+AI_JOB_NOT_FOUND             → 404, Job 없음
+AI_JOB_FILE_NOT_FOUND        → 404, Job 산출물 없음
+AI_JOB_FILE_ACCESS_DENIED    → 403, 요청 Job과 산출물 Job 불일치
+FILE_NOT_AVAILABLE           → 409, 파일 상태 비활성
+PHYSICAL_FILE_NOT_FOUND      → 404, 물리 파일 없음
+```
+
+구현 순서:
+
+```text
+1. 공통 File 다운로드 API 구현
+2. 다운로드 권한 검증 지점 추가
+3. AiJob 산출물 다운로드 API 구현
+4. 정적 `/files/**` 직접 접근은 개발/프로토타입 용도로 제한
+```
+
 ---
 
 ## 10. AiJob 연동 설계
@@ -826,6 +892,48 @@ Python 처리 요청과 Callback은 네트워크 재시도로 중복 전달될 �
 - Python은 동일 `jobId`가 이미 처리 중이면 새 Job을 만들지 않는다.
 - Callback은 `jobId + stage + eventSequence` 조합으로 중복 반영을 방지한다.
 - 완료 상태에서 이전 단계 Callback이 늦게 도착해도 상태를 역행시키지 않는다.
+
+### 10.8 AiJob 산출물 목록 조회 API
+
+Callback으로 저장된 중간 산출물과 최종 산출물을 Job 기준으로 조회한다.
+
+```http
+GET /api/v1/ai-jobs/{jobKey}/files
+```
+
+응답 예시:
+
+```json
+{
+  "items": [
+    {
+      "aiJobFileId": 1,
+      "jobKey": "JOB_20260729_ABCD1234",
+      "stage": "GLOSS_GENERATION",
+      "role": "GLOSS_SEQUENCE",
+      "fileMetadataId": 31,
+      "assetType": "JOB_INTERMEDIATE",
+      "originalFileName": "gloss-sequence.json",
+      "storedFileName": "gloss-sequence_001.json",
+      "extension": "json",
+      "contentType": "application/json",
+      "fileSize": 128,
+      "storageRelativePath": "job/JOB_20260729_ABCD1234/intermediate/gloss-sequence_001.json",
+      "accessPath": "/files/job/JOB_20260729_ABCD1234/intermediate/gloss-sequence_001.json",
+      "createdAt": "2026-07-29T10:00:00"
+    }
+  ],
+  "totalCount": 1
+}
+```
+
+조회 정책:
+
+```text
+존재하지 않는 jobKey → 404 AI_JOB_NOT_FOUND
+산출물 없음 → items 빈 배열, totalCount 0
+정렬 → AiJobFile 생성 순서 ASC
+```
 
 ---
 
@@ -1120,8 +1228,11 @@ com.hyunsuk.axplatform
 - [x] Callback files 기반 AiJob 산출물 저장
 - [x] AiJobFile Entity 및 Repository
 - [x] job + stage + role 기준 중복 Callback 파일 저장 방지
+- [x] AiJob 산출물 목록 조회 API
+- [x] 파일 다운로드 정책 문서화
 - [ ] Timeout 및 4xx/5xx 예외 변환
-- [ ] AiJob 산출물 목록 조회 API
+- [ ] 공통 File 다운로드 API
+- [ ] AiJob 산출물 다운로드 API
 - [ ] 실패 재시도
 
 ### Phase 4. 운영 안정화
