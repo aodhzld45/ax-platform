@@ -156,8 +156,8 @@ Spring Boot ResourceHandler
 | AI 워크플로우 | LangGraph |
 | RAG | LlamaIndex |
 | AI 관측 | Langfuse |
-| 프론트엔드 | React 19, Vite, TypeScript |
-| 라우팅 | React Router |
+| 프론트엔드 | Next.js App Router, React 19, TypeScript |
+| 라우팅 | Next.js App Router |
 | 서버 상태 | TanStack Query |
 | 전역 UI 상태 | Zustand |
 | HTTP 통신 | Axios |
@@ -175,8 +175,8 @@ Spring Boot ResourceHandler
 # 2. 전체 시스템 구조
 
 ```text
-React Vite
-localhost:5173
+Next.js App Router
+localhost:3000
        │
        │ REST API
        ▼
@@ -254,7 +254,7 @@ Agent 실행
 klcube-ax-prototype/
 ├─ platform-api/       # Java Spring Boot
 ├─ ai-api/             # Python FastAPI
-├─ frontend/           # React Vite
+├─ frontend/           # Next.js App Router
 ├─ infra/              # Docker, PostgreSQL 설정
 ├─ docs/               # 설계와 작업 문서
 ├─ .gitignore
@@ -266,7 +266,7 @@ klcube-ax-prototype/
 - [x] `klcube-ax-prototype` 루트 디렉터리 생성
 - [x] `platform-api` 프로젝트 배치
 - [x] `ai-api` 프로젝트 배치
-- [ ] `frontend` 프로젝트 생성
+- [x] `frontend` 프로젝트 생성
 - [ ] `infra` 디렉터리 구성
 - [ ] `docs` 디렉터리 문서 정리
 - [ ] 루트 `.gitignore` 작성
@@ -1188,25 +1188,25 @@ Trace
 
 ---
 
-# 19. Phase 16 — React 19 + Vite 프로젝트
+# 19. Phase 16 — Next.js App Router 프로젝트
 
 ## 19-1. 프로젝트 생성
 
 - [ ] Node.js 버전 확인
-- [ ] React Vite TypeScript 프로젝트 생성
-- [ ] React 19 확인
-- [ ] Vite 실행 확인
-- [ ] ESLint 확인
-- [ ] Build 확인
+- [x] Next.js App Router TypeScript 프로젝트 생성
+- [x] React 19 확인
+- [x] Next.js 실행 구조 확인
+- [x] ESLint 확인
+- [x] Build 확인
 
 ## 19-2. 의존성
 
-- [ ] React Router
-- [ ] TanStack Query
-- [ ] Axios
-- [ ] Zustand
-- [ ] lucide-react
-- [ ] 스타일 방식 확정
+- [x] Next.js App Router
+- [x] TanStack Query
+- [x] Axios
+- [x] Zustand
+- [x] lucide-react
+- [x] 스타일 방식 확정
 - [ ] Toast 라이브러리 검토
 
 ## 19-3. 기본 구조
@@ -1214,43 +1214,46 @@ Trace
 ```text
 frontend/src/
 ├─ app/
-│  ├─ App.tsx
-│  ├─ router.tsx
-│  └─ providers.tsx
-├─ api/
-│  └─ client.ts
-├─ components/
-│  ├─ layout/
-│  ├─ ui/
-│  └─ feedback/
+│  ├─ layout.tsx
+│  ├─ page.tsx
+│  ├─ providers.tsx
+│  ├─ not-found.tsx
+│  └─ (admin)/
+│     ├─ layout.tsx
+│     ├─ dashboard/page.tsx
+│     ├─ documents/page.tsx
+│     ├─ ai-jobs/page.tsx
+│     └─ system/page.tsx
 ├─ features/
-│  ├─ dashboard/
-│  ├─ documents/
-│  ├─ ai-jobs/
-│  ├─ rag-search/
-│  ├─ agents/
-│  ├─ evaluations/
-│  └─ operations/
-├─ stores/
-├─ styles/
-├─ lib/
-├─ types/
-└─ main.tsx
+│  └─ manager/
+│     ├─ dashboard/
+│     ├─ documents/
+│     ├─ ai-jobs/
+│     └─ system/
+├─ shared/
+│  ├─ api/
+│  ├─ components/
+│  ├─ hooks/
+│  ├─ lib/
+│  ├─ stores/
+│  └─ types/
+└─ styles/
 ```
 
-- [ ] App Provider 구성
-- [ ] QueryClient 구성
-- [ ] Router 구성
-- [ ] Axios Client 구성
-- [ ] 공통 Layout 구성
-- [ ] 404 화면
+- [x] App Provider 구성
+- [x] QueryClient 구성
+- [x] App Router 페이지 구성
+- [x] Axios Client 구성
+- [x] 공통 Layout 구성
+- [x] 404 화면
+- [x] Spring API rewrite 설정
 - [ ] Error Boundary 검토
 
 ## 완료 기준
 
-- [ ] React가 5173 포트에서 실행된다.
-- [ ] Java API를 호출할 수 있다.
-- [ ] 기본 관리자 Layout이 표시된다.
+- [x] Next.js가 3000 포트에서 실행 가능한 구조다.
+- [x] Java API를 `/platform-api` rewrite로 호출할 수 있다.
+- [x] 기본 관리자 Layout이 표시된다.
 
 ---
 
