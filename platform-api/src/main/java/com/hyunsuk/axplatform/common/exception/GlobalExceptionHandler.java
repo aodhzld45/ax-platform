@@ -1,7 +1,9 @@
 package com.hyunsuk.axplatform.common.exception;
 
 import com.hyunsuk.axplatform.aijob.exception.AiJobNotFoundException;
+import com.hyunsuk.axplatform.common.file.exception.FileMetadataNotFoundException;
 import com.hyunsuk.axplatform.common.file.exception.FilePolicyViolationException;
+import com.hyunsuk.axplatform.common.file.exception.StoredFileNotFoundException;
 import com.hyunsuk.axplatform.document.exception.DocumentNotFoundException;
 import com.hyunsuk.axplatform.korean.exception.KoreanSourceDocumentRegistrationException;
 import com.hyunsuk.axplatform.medical.exception.MedicalManualRegistrationException;
@@ -54,6 +56,34 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponse.of(
                         "AI_JOB_NOT_FOUND",
+                        exception.getMessage(),
+                        request.getRequestURI()
+                ));
+    }
+
+    @ExceptionHandler(FileMetadataNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleFileMetadataNotFound(
+            FileMetadataNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.of(
+                        "FILE_METADATA_NOT_FOUND",
+                        exception.getMessage(),
+                        request.getRequestURI()
+                ));
+    }
+
+    @ExceptionHandler(StoredFileNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleStoredFileNotFound(
+            StoredFileNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.of(
+                        "STORED_FILE_NOT_FOUND",
                         exception.getMessage(),
                         request.getRequestURI()
                 ));
