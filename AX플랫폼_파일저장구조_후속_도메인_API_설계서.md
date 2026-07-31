@@ -601,10 +601,23 @@ GET /api/v1/files/{fileMetadataId}/download
 예외 정책:
 
 ```text
-FILE_NOT_FOUND           → 404, 파일 메타데이터 없음
-FILE_NOT_AVAILABLE       → 409, 파일 상태가 ACTIVE가 아님
-PHYSICAL_FILE_NOT_FOUND  → 404, DB에는 있으나 물리 파일 없음
-INVALID_FILE_PATH        → 400, uploadRoot 밖의 경로 접근 시도
+FILE_METADATA_NOT_FOUND  → 404, ACTIVE 파일 메타데이터 없음
+STORED_FILE_NOT_FOUND    → 404, DB에는 있으나 물리 파일 없음
+BAD_REQUEST              → 400, uploadRoot 밖의 경로 접근 시도
+```
+
+현재 구현 상태:
+
+```text
+구현 완료 API
+GET /api/v1/files/{fileMetadataId}/download
+
+구현 완료 정책
+FileMetadata.status == ACTIVE 검증
+storageRelativePath 기준 물리 파일 조회
+Content-Type, Content-Disposition, Content-Length 헤더 반환
+파일 메타데이터 없음 및 물리 파일 없음 404 반환
+공통 파일 다운로드 테스트 추가
 ```
 
 ### 9.5 AiJob 산출물 다운로드 API 정책
@@ -638,7 +651,7 @@ PHYSICAL_FILE_NOT_FOUND      → 404, 물리 파일 없음
 구현 순서:
 
 ```text
-1. 공통 File 다운로드 API 구현
+1. 공통 File 다운로드 API 구현 완료
 2. 다운로드 권한 검증 지점 추가
 3. AiJob 산출물 다운로드 API 구현
 4. 정적 `/files/**` 직접 접근은 개발/프로토타입 용도로 제한
@@ -1230,8 +1243,8 @@ com.hyunsuk.axplatform
 - [x] job + stage + role 기준 중복 Callback 파일 저장 방지
 - [x] AiJob 산출물 목록 조회 API
 - [x] 파일 다운로드 정책 문서화
+- [x] 공통 File 다운로드 API
 - [ ] Timeout 및 4xx/5xx 예외 변환
-- [ ] 공통 File 다운로드 API
 - [ ] AiJob 산출물 다운로드 API
 - [ ] 실패 재시도
 

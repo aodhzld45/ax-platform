@@ -410,7 +410,11 @@ Document 업로드 API 구현
 → DocumentRepository로 Document 저장 연결 완료
 → 업로드 실패 시 DB Rollback 및 파일 정리 정책 적용 완료
 → multipart 업로드 201 Created, /files/** 조회, 비허용 파일 400 검증 완료
-→ 다음: 공통 File 다운로드 API 구현
+→ 공통 File 다운로드 API 구현 완료
+→ GET /api/v1/files/{fileMetadataId}/download 구현 완료
+→ FileMetadata ACTIVE 상태 검증, 물리 파일 없음 404, 다운로드 헤더 검증 완료
+→ 프론트 System 상태 페이지 API 연결 완료
+→ 다음: AiJob 산출물 전용 다운로드 API 설계 또는 Document 목록/상세 프론트 API 연결
 ```
 
 ## 현재 프로토타입 파일 처리 흐름
@@ -1247,6 +1251,9 @@ frontend/src/
 - [x] 공통 Layout 구성
 - [x] 404 화면
 - [x] Spring API rewrite 설정
+- [x] System feature API service/hook/components 구성
+- [x] System 상태 페이지 TanStack Query 연결
+- [x] System 상태 30초 polling 및 수동 새로고침 구성
 - [ ] Error Boundary 검토
 
 ## 완료 기준
@@ -1254,6 +1261,8 @@ frontend/src/
 - [x] Next.js가 3000 포트에서 실행 가능한 구조다.
 - [x] Java API를 `/platform-api` rewrite로 호출할 수 있다.
 - [x] 기본 관리자 Layout이 표시된다.
+- [x] `/system` 화면에서 통합 서비스 상태 API를 호출할 수 있다.
+- [x] 프론트 ESLint 및 Build가 통과한다.
 
 ---
 
@@ -1826,6 +1835,10 @@ frontend
 - [x] Python AI API Health 호출 및 latency 계산
 - [x] Python AI API 장애 시 전체 API는 `200 OK`, `aiApi.status = DOWN`으로 응답
 - [x] 통합 서비스 상태 API 테스트 추가
+- [x] 프론트 System 상태 페이지 API 연결
+- [x] `/system`에서 `/platform-api/api/v1/system/services` 호출
+- [x] 서비스별 `UP`/`DOWN`, latency, 오류 메시지 표시
+- [x] 30초 polling 및 수동 새로고침 처리
 - [ ] 요청 ID 전달
 
 ### 3순위 — AI Job
@@ -1857,6 +1870,13 @@ frontend
 - [x] AiJob 산출물 목록 조회 응답 DTO 구현
 - [x] AiJob 산출물 목록 조회 테스트 추가
 - [x] 파일 다운로드 정책 문서화
+- [x] 공통 File 다운로드 API 구현
+- [x] `GET /api/v1/files/{fileMetadataId}/download` 구현
+- [x] `FileMetadataStatus.ACTIVE` 상태 검증
+- [x] `storageRelativePath` 기반 물리 파일 조회
+- [x] 다운로드 `Content-Type`, `Content-Disposition`, `Content-Length` 응답 헤더 구성
+- [x] 파일 메타데이터 없음 및 물리 파일 없음 404 처리
+- [x] 공통 파일 다운로드 테스트 추가
 
 ### 4순위 — PostgreSQL 및 Flyway
 
@@ -1879,7 +1899,7 @@ frontend
 
 - [x] Java 실행
 - [x] Python 실행
-- [ ] React 실행
+- [x] React 실행
 
 ## Milestone 2 — 서비스 통신
 
@@ -1929,6 +1949,7 @@ frontend
 - [ ] Dashboard
 - [ ] Document
 - [ ] AI Job
+- [x] System 상태
 - [ ] RAG Search
 - [ ] Agent
 - [ ] Evaluation
