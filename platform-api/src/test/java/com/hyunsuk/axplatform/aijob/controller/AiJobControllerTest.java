@@ -23,10 +23,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.client.ResourceAccessException;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -34,6 +36,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -332,6 +335,33 @@ class AiJobControllerTest {
                         .value("/files/job/JOB_TEST/intermediate/gloss-sequence_001.json"))
                 .andExpect(jsonPath("$.items[0].createdAt").exists())
                 .andExpect(jsonPath("$.totalCount").value(1));
+
+        byte[] resultBytes = """
+                {"glossSequence":[]}
+                """.getBytes();
+        Path storedPath = uploadRoot.resolve(
+                fileMetadata.getStorageRelativePath()
+        );
+        Files.createDirectories(storedPath.getParent());
+        Files.write(storedPath, resultBytes);
+
+        mockMvc.perform(
+                        get(
+                                "/api/v1/ai-jobs/{jobKey}/files/{aiJobFileId}/download",
+                                jobKey,
+                                files.get(0).getId()
+                        )
+                )
+                .andExpect(status().isOk())
+                .andExpect(header().string(
+                        "Content-Type",
+                        containsString("application/json")
+                ))
+                .andExpect(header().string(
+                        "Content-Disposition",
+                        containsString("attachment")
+                ))
+                .andExpect(content().bytes(resultBytes));
     }
 
     @Test

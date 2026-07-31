@@ -1,5 +1,6 @@
 package com.hyunsuk.axplatform.common.exception;
 
+import com.hyunsuk.axplatform.aijob.exception.AiJobFileNotFoundException;
 import com.hyunsuk.axplatform.aijob.exception.AiJobNotFoundException;
 import com.hyunsuk.axplatform.common.file.exception.FileMetadataNotFoundException;
 import com.hyunsuk.axplatform.common.file.exception.FilePolicyViolationException;
@@ -56,6 +57,20 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponse.of(
                         "AI_JOB_NOT_FOUND",
+                        exception.getMessage(),
+                        request.getRequestURI()
+                ));
+    }
+
+    @ExceptionHandler(AiJobFileNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAiJobFileNotFound(
+            AiJobFileNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.of(
+                        "AI_JOB_FILE_NOT_FOUND",
                         exception.getMessage(),
                         request.getRequestURI()
                 ));

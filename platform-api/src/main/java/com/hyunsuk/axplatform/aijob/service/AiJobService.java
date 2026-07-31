@@ -15,11 +15,14 @@ import com.hyunsuk.axplatform.aijob.entity.AiJobFile;
 import com.hyunsuk.axplatform.aijob.entity.AiJobFileRole;
 import com.hyunsuk.axplatform.aijob.entity.AiJobStatus;
 import com.hyunsuk.axplatform.aijob.entity.AiJobType;
+import com.hyunsuk.axplatform.aijob.exception.AiJobFileNotFoundException;
 import com.hyunsuk.axplatform.aijob.exception.AiJobNotFoundException;
 import com.hyunsuk.axplatform.aijob.repository.AiJobFileRepository;
 import com.hyunsuk.axplatform.aijob.repository.AiJobRepository;
+import com.hyunsuk.axplatform.common.file.dto.FileDownloadResource;
 import com.hyunsuk.axplatform.common.file.entity.FileMetadata;
 import com.hyunsuk.axplatform.common.file.repository.FileMetadataRepository;
+import com.hyunsuk.axplatform.common.file.service.FileDownloadService;
 import com.hyunsuk.axplatform.common.file.type.FileAssetType;
 import com.hyunsuk.axplatform.document.entity.Document;
 import com.hyunsuk.axplatform.document.exception.DocumentNotFoundException;
@@ -47,6 +50,7 @@ public class AiJobService {
     private final AiJobRepository aiJobRepository;
     private final AiJobFileRepository aiJobFileRepository;
     private final FileMetadataRepository fileMetadataRepository;
+    private final FileDownloadService fileDownloadService;
     private final AiJobPythonClient aiJobPythonClient;
 
     @Transactional
@@ -118,6 +122,27 @@ public class AiJobService {
                 .toList();
 
         return AiJobFileListResponse.of(items);
+    }
+
+    @Transactional(readOnly = true)
+    public FileDownloadResource findJobFileDownloadResource(
+            String jobKey,
+            Long aiJobFileId
+    ) {
+        AiJob aiJob = aiJobRepository.findByJobKey(jobKey)
+                .orElseThrow(() -> new AiJobNotFoundException(jobKey));
+
+        AiJobFile aiJobFile = aiJobFileRepository.findById(aiJobFileId)
+                .orElseThrow(() ->
+                        new AiJobFileNotFoundException(jobKey, aiJobFileId));
+
+        if (!aiJobFile.getAiJob().getId().equals(aiJob.getId())) {
+            throw new AiJobFileNotFoundException(jobKey, aiJobFileId);
+        }
+
+        return fileDownloadService.findDownloadResource(
+                aiJobFile.getFileMetadata().getId()
+        );
     }
 
     @Transactional
