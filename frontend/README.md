@@ -56,8 +56,8 @@ PLATFORM_API_BASE_URL=http://localhost:8080
 ## 현재 구현된 관리자 화면
 
 - `/dashboard`: 관리자 대시보드 placeholder
-- `/documents`: 문서 관리 placeholder
-- `/ai-jobs`: AI Job 관리 placeholder
+- `/documents`: 문서 목록, 상세, 업로드, 파일 다운로드, AI Job 생성
+- `/ai-jobs`: 문서별 AI Job 목록, 상세 polling, 산출물 목록, 산출물 다운로드
 - `/system`: `GET /api/v1/system/services` 기반 서비스 상태 조회
 
 ## 검증
