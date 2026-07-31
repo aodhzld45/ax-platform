@@ -642,18 +642,31 @@ GET /api/v1/ai-jobs/{jobKey}/files/{aiJobFileId}/download
 
 ```text
 AI_JOB_NOT_FOUND             → 404, Job 없음
-AI_JOB_FILE_NOT_FOUND        → 404, Job 산출물 없음
-AI_JOB_FILE_ACCESS_DENIED    → 403, 요청 Job과 산출물 Job 불일치
-FILE_NOT_AVAILABLE           → 409, 파일 상태 비활성
-PHYSICAL_FILE_NOT_FOUND      → 404, 물리 파일 없음
+AI_JOB_FILE_NOT_FOUND        → 404, Job 산출물 없음 또는 요청 Job과 산출물 Job 불일치
+FILE_METADATA_NOT_FOUND      → 404, ACTIVE 파일 메타데이터 없음
+STORED_FILE_NOT_FOUND        → 404, 물리 파일 없음
+```
+
+현재 구현 상태:
+
+```text
+구현 완료 API
+GET /api/v1/ai-jobs/{jobKey}/files/{aiJobFileId}/download
+
+구현 완료 정책
+AiJob 조회
+AiJobFile 조회
+jobKey + aiJobFileId 소유 관계 검증
+공통 FileDownloadService 위임
+AiJob 산출물 다운로드 테스트 추가
 ```
 
 구현 순서:
 
 ```text
 1. 공통 File 다운로드 API 구현 완료
-2. 다운로드 권한 검증 지점 추가
-3. AiJob 산출물 다운로드 API 구현
+2. AiJob 산출물 다운로드 API 구현 완료
+3. 다운로드 권한 검증 지점 추가
 4. 정적 `/files/**` 직접 접근은 개발/프로토타입 용도로 제한
 ```
 
@@ -1244,8 +1257,8 @@ com.hyunsuk.axplatform
 - [x] AiJob 산출물 목록 조회 API
 - [x] 파일 다운로드 정책 문서화
 - [x] 공통 File 다운로드 API
+- [x] AiJob 산출물 다운로드 API
 - [ ] Timeout 및 4xx/5xx 예외 변환
-- [ ] AiJob 산출물 다운로드 API
 - [ ] 실패 재시도
 
 ### Phase 4. 운영 안정화

@@ -414,7 +414,13 @@ Document 업로드 API 구현
 → GET /api/v1/files/{fileMetadataId}/download 구현 완료
 → FileMetadata ACTIVE 상태 검증, 물리 파일 없음 404, 다운로드 헤더 검증 완료
 → 프론트 System 상태 페이지 API 연결 완료
-→ 다음: AiJob 산출물 전용 다운로드 API 설계 또는 Document 목록/상세 프론트 API 연결
+→ Document 목록/상세 프론트 API 연결 완료
+→ Document 업로드 프론트 구현 완료
+→ Document 상세에서 AiJob 생성 버튼 연결 완료
+→ AiJob 목록/상세 polling 화면 구현 완료
+→ AiJob 산출물 목록 조회 화면 구현 완료
+→ AiJob 산출물 전용 다운로드 API 구현 완료
+→ 다음: Toast/Error Boundary, Document 업로드 UX 개선, AiJob 실패 재시도 버튼 설계
 ```
 
 ## 현재 프로토타입 파일 처리 흐름
@@ -1254,6 +1260,17 @@ frontend/src/
 - [x] System feature API service/hook/components 구성
 - [x] System 상태 페이지 TanStack Query 연결
 - [x] System 상태 30초 polling 및 수동 새로고침 구성
+- [x] Document feature API service/hook/components 구성
+- [x] Document 목록/상세 API 연결
+- [x] Document 업로드 FormData 요청 연결
+- [x] Document 상태 필터 및 페이지네이션 UI 구성
+- [x] Document 상세에서 파일 다운로드 및 정적 열기 링크 연결
+- [x] Document 상세에서 AiJob 생성 버튼 연결
+- [x] AiJob feature API service/hook/components 구성
+- [x] AiJob 문서별 목록 조회 화면 구성
+- [x] AiJob 상세 polling 화면 구성
+- [x] AiJob 산출물 목록 조회 화면 구성
+- [x] AiJob 산출물 전용 다운로드 링크 연결
 - [ ] Error Boundary 검토
 
 ## 완료 기준
@@ -1262,6 +1279,8 @@ frontend/src/
 - [x] Java API를 `/platform-api` rewrite로 호출할 수 있다.
 - [x] 기본 관리자 Layout이 표시된다.
 - [x] `/system` 화면에서 통합 서비스 상태 API를 호출할 수 있다.
+- [x] `/documents` 화면에서 목록/상세/업로드/AI Job 생성 흐름을 사용할 수 있다.
+- [x] `/ai-jobs` 화면에서 Job 목록/상세/산출물 목록을 확인할 수 있다.
 - [x] 프론트 ESLint 및 Build가 통과한다.
 
 ---
@@ -1877,6 +1896,10 @@ frontend
 - [x] 다운로드 `Content-Type`, `Content-Disposition`, `Content-Length` 응답 헤더 구성
 - [x] 파일 메타데이터 없음 및 물리 파일 없음 404 처리
 - [x] 공통 파일 다운로드 테스트 추가
+- [x] AiJob 산출물 전용 다운로드 API 구현
+- [x] `GET /api/v1/ai-jobs/{jobKey}/files/{aiJobFileId}/download` 구현
+- [x] `jobKey + aiJobFileId` 소유 관계 검증
+- [x] AiJob 산출물 다운로드 테스트 추가
 
 ### 4순위 — PostgreSQL 및 Flyway
 
@@ -1947,8 +1970,8 @@ frontend
 ## Milestone 8 — 관리자 화면
 
 - [ ] Dashboard
-- [ ] Document
-- [ ] AI Job
+- [x] Document
+- [x] AI Job
 - [x] System 상태
 - [ ] RAG Search
 - [ ] Agent
